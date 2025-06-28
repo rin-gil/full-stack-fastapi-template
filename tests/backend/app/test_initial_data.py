@@ -17,7 +17,7 @@ from app.crud.user import UserCRUD
 from app.initial_data import InitialDataGenerator, main
 from app.models import User, UserCreate
 
-__all__: tuple[str, ...] = ()
+__all__: tuple = ()
 
 
 @pytest.fixture
