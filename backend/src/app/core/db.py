@@ -22,7 +22,7 @@ class DatabaseManager:
         """
         self._async_engine: AsyncEngine = create_async_engine(url=settings.sqlalchemy_database_uri)
         self._async_session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
-            self._async_engine, class_=AsyncSession, expire_on_commit=False
+            bind=self._async_engine, class_=AsyncSession, expire_on_commit=False
         )
 
     @property
