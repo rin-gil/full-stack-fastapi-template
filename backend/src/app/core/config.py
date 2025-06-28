@@ -160,7 +160,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """
-    Returns the settings object. The lru_cache decorator ensures this function is only called once.
+    Returns the Settings object. The lru_cache decorator ensures this function is only called once.
 
     :return: Settings object.
     """
