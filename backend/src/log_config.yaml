@@ -1,0 +1,32 @@
+# This file is the default config for uvicorn's logging, which is used by the server.
+
+version: 1
+disable_existing_loggers: False
+
+# Formatters are essentially not used here, as Loguru has its own, but the section is mandatory for a valid schema.
+formatters:
+  default:
+    (): uvicorn.logging.DefaultFormatter
+    fmt: "%(levelprefix)s %(message)s"
+    use_colors: null
+
+handlers:
+  # The main processor intercepts logs and sends them to Loguru.
+  intercept:
+    # Specify the full path to the interceptor class in Python.
+    class: app.core.log_setup.InterceptHandler
+
+loggers:
+  # Specify which loggers should use our handler.
+  uvicorn:
+    handlers: [intercept]
+    level: INFO
+    propagate: no
+  uvicorn.error:
+    handlers: [intercept]
+    level: INFO
+    propagate: no
+  uvicorn.access:
+    handlers: [intercept]
+    level: INFO
+    propagate: no
