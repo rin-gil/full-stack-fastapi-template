@@ -2,12 +2,11 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from urllib.parse import quote_plus
 from warnings import warn
 
 from pydantic import AnyUrl, BeforeValidator, EmailStr, computed_field, model_validator
-from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
@@ -77,18 +76,23 @@ class Settings(BaseSettings):
 
         :return: String representation of the database URI.
         """
-        params: dict[str, str | int] = {
-            "scheme": "postgresql+asyncpg",
+        params: dict[str, Any] = {
             "username": self.POSTGRES_USER,
             "password": self.POSTGRES_PASSWORD,
-            "path": self.POSTGRES_DB,
+            "dbname": self.POSTGRES_DB,
         }
         if self.ENVIRONMENT == "production" and self.POSTGRES_SOCKET:
-            params["query"] = f"host={quote_plus(self.POSTGRES_SOCKET)}"
+            params["socket_path"] = self.POSTGRES_SOCKET
         else:
             params["host"] = self.POSTGRES_SERVER
             params["port"] = self.POSTGRES_PORT
-        return str(MultiHostUrl.build(**params))
+        user_info: str = params["username"]
+        if params.get("password"):
+            user_info += f":{quote_plus(string=str(params['password']))}"
+        if "socket_path" in params:
+            socket: str = quote_plus(string=str(params["socket_path"]))
+            return f"postgresql+asyncpg://{user_info}@/{params['dbname']}?host={socket}"
+        return f"postgresql+asyncpg://{user_info}@{params["host"]}:{params["port"]}/{params["dbname"]}"
 
     # Email
     SMTP_TLS: bool = True
