@@ -65,7 +65,7 @@ class EmailManager:
                 VALIDATE_CERTS=True,
             )
         self._jinja_env: Environment = Environment(
-            loader=FileSystemLoader(searchpath=Path(self._settings.BASE_DIR, "email-templates", "build")),
+            loader=FileSystemLoader(searchpath=Path(self._settings.BASE_DIR, "../email-templates", "build")),
             autoescape=select_autoescape(enabled_extensions=["html", "xml"]),
             enable_async=True,
         )

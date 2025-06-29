@@ -12,7 +12,7 @@ from pytest_mock import MockerFixture
 
 from app.core.config import Settings
 from app.core.security import SecurityManager
-from app.emails import EmailManager, get_email_manager
+from app.core.emails import EmailManager, get_email_manager
 
 __all__: tuple = ()
 
@@ -97,7 +97,7 @@ async def test_email_manager_init(
     :return: None
     """
     mock_settings.emails_enabled = emails_enabled
-    mocker.patch(target="app.emails.Environment", return_value=mock_jinja_env)
+    mocker.patch(target="app.core.emails.Environment", return_value=mock_jinja_env)
     email_manager: EmailManager = EmailManager(settings=mock_settings, security_manager=mock_security_manager)
     assert email_manager._settings is mock_settings
     assert email_manager._security_manager is mock_security_manager
@@ -176,8 +176,8 @@ async def test_send_email(
     mock_fast_mail: AsyncMock = AsyncMock(spec=FastMail)
     if expect_error:
         mock_fast_mail.send_message.side_effect = Exception("Send error")
-    mocker.patch(target="app.emails.FastMail", return_value=mock_fast_mail)
-    mock_logger: MagicMock = mocker.patch("app.emails.logger")
+    mocker.patch(target="app.core.emails.FastMail", return_value=mock_fast_mail)
+    mock_logger: MagicMock = mocker.patch("app.core.emails.logger")
     email_to: str = "test@example.com"
     subject: str = "Test Subject"
     html_content: str = "<html>Test</html>"
@@ -213,7 +213,7 @@ async def test_generate_password_reset_token(
     email: str = "test@example.com"
     mock_jwt_encode: MagicMock = mocker.patch("jwt.encode")
     now: datetime = datetime.now(tz=timezone.utc)
-    mocker.patch(target="app.emails.datetime").now.return_value = now
+    mocker.patch(target="app.core.emails.datetime").now.return_value = now
     result: str = email_manager.generate_password_reset_token(email=email)
     expected_expires: datetime = now + timedelta(hours=mock_settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     mock_jwt_encode.assert_called_once_with(
@@ -381,9 +381,9 @@ async def test_get_email_manager_caching(
     :return: None
     """
     get_email_manager.cache_clear()
-    mock_get_settings: MagicMock = mocker.patch(target="app.emails.get_settings", return_value=mock_settings)
+    mock_get_settings: MagicMock = mocker.patch(target="app.core.emails.get_settings", return_value=mock_settings)
     mock_get_security_manager: MagicMock = mocker.patch(
-        target="app.emails.get_security_manager", return_value=mock_security_manager
+        target="app.core.emails.get_security_manager", return_value=mock_security_manager
     )
     email_manager1: EmailManager = get_email_manager()
     email_manager2: EmailManager = get_email_manager()
