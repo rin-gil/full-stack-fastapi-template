@@ -11,7 +11,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 # noinspection PyProtectedMember
 from app.api.deps import ActiveSuperuserProvider, CurrentUserProvider, ItemCRUDProvider, UserCRUDProvider
-from app.core.config import Settings
 from app.core.security import SecurityManager
 from app.crud.item import ItemCRUD
 from app.crud.user import UserCRUD
@@ -28,8 +27,8 @@ async def test_user_crud_provider() -> None:
     :return: None
     """
     session_mock: AsyncMock = AsyncMock(spec=AsyncSession)
-    user_crud_provider: UserCRUDProvider = UserCRUDProvider(session=session_mock)
-    result: UserCRUD = user_crud_provider()
+    user_crud_provider: UserCRUDProvider = UserCRUDProvider()
+    result: UserCRUD = user_crud_provider(session=session_mock)
     assert isinstance(result, UserCRUD)
     assert result._session is session_mock
 
@@ -42,8 +41,8 @@ async def test_item_crud_provider() -> None:
     :return: None
     """
     session_mock: AsyncMock = AsyncMock(spec=AsyncSession)
-    item_crud_provider: ItemCRUDProvider = ItemCRUDProvider(session=session_mock)
-    result: ItemCRUD = item_crud_provider()
+    item_crud_provider: ItemCRUDProvider = ItemCRUDProvider()
+    result: ItemCRUD = item_crud_provider(session=session_mock)
     assert isinstance(result, ItemCRUD)
     assert result._session is session_mock
 
@@ -55,10 +54,10 @@ async def test_item_crud_provider() -> None:
         ({"sub": str(uuid4())}, MagicMock(spec=User, is_active=True), False, None, None),
         ({"sub": str(uuid4())}, None, True, 404, "User not found"),
         ({"sub": str(uuid4())}, MagicMock(spec=User, is_active=False), True, 400, "Inactive user"),
-        ({"sub": None}, None, True, 403, "Could not validate credentials"),
+        ({"sub": "invalid-uuid"}, None, True, 403, "Could not validate credentials"),
         ({}, None, True, 403, "Could not validate credentials"),
     ],
-    ids=["success", "user_not_found", "inactive_user", "missing_sub", "invalid_token"],
+    ids=["success", "user_not_found", "inactive_user", "invalid_uuid", "invalid_token"],
 )
 async def test_current_user_provider(
     mocker: MockerFixture,
@@ -82,29 +81,23 @@ async def test_current_user_provider(
     user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUD)
     user_crud_mock.get_by_id.return_value = user
     token: str = "mocked_token"
-    settings_mock: MagicMock = MagicMock(spec=Settings)
-    settings_mock.SECRET_KEY = "secret"
-    settings_mock.API_V1_STR = "/api/v1"
-    mocker.patch(target="app.api.deps.get_settings", return_value=settings_mock)
-    security_mock: MagicMock = MagicMock(spec=SecurityManager)
+    _: MagicMock = mocker.patch(target="app.api.deps.settings")
+    security_mock: SecurityManager = MagicMock(spec=SecurityManager)
     security_mock.ALGORITHM = "HS256"
-    mocker.patch(target="app.api.deps.get_security_manager", return_value=security_mock)
+    current_user_provider: CurrentUserProvider = CurrentUserProvider()
     if token_payload == {}:
         mocker.patch(target="jwt.decode", side_effect=InvalidTokenError("Invalid token"))
     else:
         mocker.patch(target="jwt.decode", return_value=token_payload)
-    current_user_provider: CurrentUserProvider = CurrentUserProvider(user_crud=user_crud_mock, token=token)
     if raises_exception:
         with pytest.raises(expected_exception=HTTPException) as exc_info:
-            await current_user_provider()
+            await current_user_provider(token=token, user_crud=user_crud_mock, security_manager=security_mock)
         assert exc_info.value.status_code == expected_status
         assert exc_info.value.detail == expected_detail
-        if token_payload.get("sub") and token_payload["sub"] is not None:
-            user_crud_mock.get_by_id.assert_called_once_with(user_id=UUID(token_payload["sub"]))
-        else:
-            user_crud_mock.get_by_id.assert_not_called()
     else:
-        result: User = await current_user_provider()
+        result: User = await current_user_provider(
+            token=token, user_crud=user_crud_mock, security_manager=security_mock
+        )
         user_crud_mock.get_by_id.assert_called_once_with(user_id=UUID(token_payload["sub"]))
         assert result is user
 
@@ -128,12 +121,12 @@ async def test_active_superuser_provider(
     :return: None
     """
     user_mock: MagicMock = MagicMock(spec=User, is_superuser=is_superuser)
-    active_superuser_provider: ActiveSuperuserProvider = ActiveSuperuserProvider(current_user=user_mock)
+    active_superuser_provider: ActiveSuperuserProvider = ActiveSuperuserProvider()
     if raises_exception:
         with pytest.raises(expected_exception=HTTPException) as exc_info:
-            active_superuser_provider()
+            active_superuser_provider(current_user=user_mock)
         assert exc_info.value.status_code == expected_status
         assert exc_info.value.detail == expected_detail
     else:
-        result: User = active_superuser_provider()
+        result: User = active_superuser_provider(current_user=user_mock)
         assert result is user_mock

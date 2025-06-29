@@ -1,4 +1,4 @@
-# backend/src/app/api/deps.py (ИСПРАВЛЕННАЯ, ФИНАЛЬНАЯ ВЕРСИЯ)
+"""Module for dependency injection."""
 
 from typing import Annotated, Type
 from uuid import UUID
@@ -15,66 +15,95 @@ from app.core.db import get_db_manager, DatabaseManager
 from app.core.security import get_security_manager, SecurityManager
 from app.crud.item import ItemCRUD
 from app.crud.user import UserCRUD
-from app.models import TokenPayload, User
+from app.models import User
 
 __all__: tuple[str, ...] = ("CurrentUser", "CurrentSuperuser", "ItemCRUDDep", "UserCRUDDep")
+
 
 # Basic settings
 settings: Settings = get_settings()
 db_manager: DatabaseManager = get_db_manager()
 reusable_oauth2: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/access-token")
 
-# --- ИЗМЕНЕНИЕ 1: ЗАМЕНЯЕМ ВСЕ ПРОВАЙДЕРЫ НА ФУНКЦИИ ---
-
-# Зависимость сессии
-SessionDep = Annotated[AsyncSession, Depends(db_manager.get_session)]
-
-# CRUD зависимости
-def get_user_crud(session: SessionDep) -> UserCRUD:
-    return UserCRUD(session=session)
-
-def get_item_crud(session: SessionDep) -> ItemCRUD:
-    return ItemCRUD(session=session)
-
-UserCRUDDep = Annotated[UserCRUD, Depends(get_user_crud)]
-ItemCRUDDep = Annotated[ItemCRUD, Depends(get_item_crud)]
-
-# Зависимости аутентификации
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
-SecurityManagerDep = Annotated[SecurityManager, Depends(get_security_manager)]
-
-async def get_current_user(
-    token: TokenDep, user_crud: UserCRUDDep, security_manager: SecurityManagerDep
-) -> User:
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security_manager.ALGORITHM]
-        )
-        user_id = UUID(payload["sub"])
-    except (InvalidTokenError, ValidationError, ValueError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        ) from e
-
-    user = await user_crud.get_by_id(user_id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return user
-
-def get_current_active_superuser(
-    current_user: Annotated[User, Depends(get_current_user)]
-) -> User:
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403, detail="The user doesn't have enough privileges"
-        )
-    return current_user
+# Basic dependencies
+SessionDep: Type[AsyncSession] = Annotated[AsyncSession, Depends(db_manager.get_session)]
+TokenDep: Type[str] = Annotated[str, Depends(reusable_oauth2)]
+SecurityManagerDep: Type[SecurityManager] = Annotated[SecurityManager, Depends(get_security_manager)]
 
 
-# Финальные псевдонимы, которые мы используем в роутерах.
-# Их реализация изменилась, но имена остались те же.
-CurrentUser = Annotated[User, Depends(get_current_user)]
-CurrentSuperuser = Annotated[User, Depends(get_current_active_superuser)]
+# Class dependencies for CRUD
+class UserCRUDProvider:
+    """Class dependency for providing UserCRUD."""
+
+    def __call__(self, session: SessionDep) -> UserCRUD:
+        """Instantiate UserCRUD with a given session.
+
+        :param session: An asynchronous session to perform database operations.
+        :return: An instance of UserCRUD.
+        """
+        return UserCRUD(session=session)
+
+
+class ItemCRUDProvider:
+    """Class dependency for providing ItemCRUD."""
+
+    def __call__(self, session: SessionDep) -> ItemCRUD:
+        """
+        Instantiate ItemCRUD with a given session.
+
+        :param session: An asynchronous session to perform database operations.
+        :return: An instance of ItemCRUD.
+        """
+        return ItemCRUD(session=session)
+
+
+UserCRUDDep: Type[UserCRUD] = Annotated[UserCRUD, Depends(UserCRUDProvider())]
+ItemCRUDDep: Type[ItemCRUD] = Annotated[ItemCRUD, Depends(ItemCRUDProvider())]
+
+
+# Class dependencies for authentication
+class CurrentUserProvider:
+    """Class dependency for obtaining the current user."""
+
+    async def __call__(self, token: TokenDep, user_crud: UserCRUDDep, security_manager: SecurityManagerDep) -> User:
+        """
+        Retrieve the current user based on the provided JWT token.
+
+        :param token: The JWT token extracted from the request, used for authentication.
+        :param user_crud: An instance of UserCRUD to perform user retrieval operations.
+        :param security_manager: An instance of SecurityManager to handle token decoding.
+        :return: The User object corresponding to the token's subject (user ID).
+        :raises HTTPException: If the token is invalid, the user is not found, or the user is inactive.
+        """
+        try:
+            payload: dict = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[security_manager.ALGORITHM])
+            user_id: UUID = UUID(hex=payload["sub"])
+        except (InvalidTokenError, ValidationError, ValueError) as exc:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Could not validate credentials") from exc
+        user: User | None = await user_crud.get_by_id(user_id=user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if not user.is_active:
+            raise HTTPException(status_code=400, detail="Inactive user")
+        return user
+
+
+class ActiveSuperuserProvider:
+    """Class dependency for obtaining the currently active superuser."""
+
+    def __call__(self, current_user: Annotated[User, Depends(CurrentUserProvider())]) -> User:
+        """
+        Retrieve the currently active superuser.
+
+        :param current_user: The current user, injected by the `CurrentUserProvider`.
+        :return: The User object corresponding to the current superuser.
+        :raises HTTPException: If the current user is not a superuser.
+        """
+        if not current_user.is_superuser:
+            raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
+        return current_user
+
+
+# Final pseudonyms
+CurrentUser: Type[User] = Annotated[User, Depends(CurrentUserProvider())]
+CurrentSuperuser: Type[User] = Annotated[User, Depends(ActiveSuperuserProvider())]
