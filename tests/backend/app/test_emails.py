@@ -243,7 +243,7 @@ async def test_verify_password_reset_token(
     :param mocker: Pytest mocker fixture.
     :param mock_settings: Mocked Settings object.
     :param mock_security_manager: Mocked SecurityManager object.
-    :param jwt_decode_result: Result of jwt.decode (valid payload or exception).
+    :param jwt_decode_result: Result of 'jwt.decode' (valid payload or exception).
     :param expected_result: Expected result of the method.
     :return: None
     """
