@@ -7,7 +7,7 @@ import pytest
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.crud.item import ItemCRUD
-from app.models import Item, ItemCreate, ItemUpdate
+from app.models import Item, ItemCreate, ItemUpdate, ItemsPublic, ItemPublic
 
 __all__: tuple = ()
 
@@ -104,14 +104,29 @@ async def test_item_crud_get(session_mock: AsyncSession, item_exists: bool, item
 @pytest.mark.parametrize(
     "skip, limit, items_count, expected_items",
     [
-        (0, 100, 2, [Item(title="Item1", owner_id=uuid4()), Item(title="Item2", owner_id=uuid4())]),
-        (1, 1, 2, [Item(title="Item2", owner_id=uuid4())]),
+        (
+            0,
+            100,
+            2,
+            [
+                ItemPublic(title="Item1", owner_id=uuid4(), id=uuid4()),
+                ItemPublic(title="Item2", owner_id=uuid4(), id=uuid4()),
+            ],
+        ),
+        (
+            1,
+            1,
+            2,
+            [
+                ItemPublic(title="Item2", owner_id=uuid4(), id=uuid4()),
+            ],
+        ),
         (0, 100, 0, []),
     ],
     ids=["default_pagination", "skip_and_limit", "empty_result"],
 )
 async def test_item_crud_get_multi(
-    session_mock: AsyncSession, skip: int, limit: int, items_count: int, expected_items: list[Item]
+    session_mock: AsyncSession, skip: int, limit: int, items_count: int, expected_items: list[ItemPublic]
 ) -> None:
     """
     Test the get_multi method of ItemCRUD.
@@ -125,15 +140,15 @@ async def test_item_crud_get_multi(
     """
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
     session_mock.exec.side_effect = [
-        MagicMock(scalar_one=MagicMock(return_value=items_count)),
+        MagicMock(one=MagicMock(return_value=items_count)),
         MagicMock(all=MagicMock(return_value=[(item,) for item in expected_items])),
     ]
-    result_items, result_count = await item_crud.get_multi(skip=skip, limit=limit)
+    result: ItemsPublic = await item_crud.get_multi(skip=skip, limit=limit)
     assert session_mock.exec.call_count == 2
     session_mock.exec.assert_any_call(statement=ANY)
     session_mock.exec.assert_any_call(statement=ANY)
-    assert result_items == expected_items, f"Expected items {expected_items}, got {result_items}"
-    assert result_count == items_count, f"Expected count {items_count}, got {result_count}"
+    assert result.data == expected_items, f"Expected items {expected_items}, got {result.data}"
+    assert result.count == items_count, f"Expected count {items_count}, got {result.count}"
 
 
 # noinspection PyUnresolvedReferences
@@ -141,20 +156,41 @@ async def test_item_crud_get_multi(
 @pytest.mark.parametrize(
     "skip, limit, items_count, expected_items, owner_id",
     [
-        (0, 100, 2, [Item(title="Item1", owner_id=uuid4()), Item(title="Item2", owner_id=uuid4())], uuid4()),
-        (1, 1, 2, [Item(title="Item2", owner_id=uuid4())], uuid4()),
+        (
+            0,
+            100,
+            2,
+            [
+                ItemPublic(title="Item1", owner_id=uuid4(), id=uuid4()),
+                ItemPublic(title="Item2", owner_id=uuid4(), id=uuid4()),
+            ],
+            uuid4(),
+        ),
+        (
+            1,
+            1,
+            2,
+            [
+                ItemPublic(title="Item2", owner_id=uuid4(), id=uuid4()),
+            ],
+            uuid4(),
+        ),
         (0, 100, 0, [], uuid4()),
     ],
     ids=["default_pagination", "skip_and_limit", "empty_result"],
 )
 async def test_item_crud_get_multi_by_owner(
-    session_mock: AsyncSession, skip: int, limit: int, items_count: int, expected_items: list[Item], owner_id: UUID
+    session_mock: AsyncSession,
+    skip: int,
+    limit: int,
+    items_count: int,
+    expected_items: list[ItemPublic],
+    owner_id: UUID,
 ) -> None:
     """
     Test the get_multi_by_owner method of ItemCRUD.
 
     :param session_mock: Mocked AsyncSession object.
-    :param mocker: Pytest mocker fixture.
     :param skip: Number of items to skip.
     :param limit: Maximum number of items to return.
     :param items_count: Total number of items for the owner.
@@ -164,15 +200,15 @@ async def test_item_crud_get_multi_by_owner(
     """
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
     session_mock.exec.side_effect = [
-        MagicMock(scalar_one=MagicMock(return_value=items_count)),
+        MagicMock(one=MagicMock(return_value=items_count)),
         MagicMock(all=MagicMock(return_value=[(item,) for item in expected_items])),
     ]
-    result_items, result_count = await item_crud.get_multi_by_owner(owner_id=owner_id, skip=skip, limit=limit)
+    result: ItemsPublic = await item_crud.get_multi_by_owner(owner_id=owner_id, skip=skip, limit=limit)
     assert session_mock.exec.call_count == 2
     session_mock.exec.assert_any_call(statement=ANY)
     session_mock.exec.assert_any_call(statement=ANY)
-    assert result_items == expected_items, f"Expected items {expected_items}, got {result_items}"
-    assert result_count == items_count, f"Expected count {items_count}, got {result_count}"
+    assert result.data == expected_items, f"Expected items {expected_items}, got {result.data}"
+    assert result.count == items_count, f"Expected count {items_count}, got {result.count}"
 
 
 # noinspection PyUnresolvedReferences
@@ -201,13 +237,14 @@ async def test_item_crud_update(
     :return: None
     """
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
-    db_item: Item = MagicMock(spec=Item)
+    db_item: Item = Item(title="Original Title", description="Original Description", owner_id=uuid4())
     result: Item = await item_crud.update(db_item=db_item, item_in=update_data)
-    db_item.sqlmodel_update.assert_called_once_with(obj=expected_update)
+    assert db_item.title == expected_update.get("title", db_item.title)
+    assert db_item.description == expected_update.get("description", db_item.description)
     session_mock.add.assert_called_once_with(instance=db_item)
     session_mock.commit.assert_called_once()
     session_mock.refresh.assert_called_once_with(instance=db_item)
-    assert result is db_item, "Returned item should match the updated item"
+    assert result == db_item, "Returned item should match the updated item"
 
 
 # noinspection PyUnresolvedReferences
@@ -238,3 +275,22 @@ async def test_item_crud_remove(session_mock: AsyncSession, item_exists: bool, i
         session_mock.delete.assert_not_called()
         session_mock.commit.assert_not_called()
     assert result == db_item, f"Expected {'item' if item_exists else 'None'}, got {result}"
+
+
+# noinspection PyUnresolvedReferences
+@pytest.mark.asyncio
+@pytest.mark.parametrize("items_exist, owner_id", [(True, uuid4()), (False, uuid4())], ids=["items_exist", "no_items"])
+async def test_item_crud_remove_by_owner(session_mock: AsyncSession, items_exist: bool, owner_id: UUID) -> None:
+    """
+    Test the remove_by_owner method of ItemCRUD.
+
+    :param session_mock: Mocked AsyncSession object.
+    :param items_exist: Whether items exist for the owner.
+    :param owner_id: UUID of the owner whose items will be deleted.
+    :return: None
+    """
+    item_crud: ItemCRUD = ItemCRUD(session=session_mock)
+    session_mock.exec.return_value = MagicMock() if items_exist else MagicMock()
+    await item_crud.remove_by_owner(owner_id=owner_id)
+    session_mock.exec.assert_called_once_with(statement=ANY)
+    session_mock.commit.assert_called_once()

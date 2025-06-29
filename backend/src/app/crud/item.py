@@ -1,14 +1,16 @@
 """Module for User CRUD operations for Item model."""
 
-from typing import Any, Type
+from typing import Any, Type, Sequence
 from uuid import UUID
 
-from sqlalchemy import Select
-from sqlalchemy.engine import TupleResult
+from sqlalchemy import delete, Row, RowMapping, ScalarResult, Delete
 from sqlmodel import func, select
 
+# noinspection PyProtectedMember
+from sqlmodel.sql._expression_select_cls import SelectOfScalar
+
 from app.crud.base import BaseCRUD
-from app.models import Item, ItemCreate, ItemUpdate
+from app.models import Item, ItemCreate, ItemUpdate, ItemsPublic
 
 __all__: tuple[str] = ("ItemCRUD",)
 
@@ -39,38 +41,36 @@ class ItemCRUD(BaseCRUD):
         """
         return await self._session.get(entity=Item, ident=(item_id,))
 
-    async def get_multi(self, *, skip: int = 0, limit: int = 100) -> tuple[list[Item], int]:
+    async def get_multi(self, *, skip: int = 0, limit: int = 100) -> ItemsPublic:
         """
         Retrieve multiple items from the database (for superusers).
 
         :param skip: The number of items to skip from the start of the query.
         :param limit: The maximum number of items to return.
-        :return: A tuple containing a list of items and the total count of items.
+        :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement: Select[tuple[int]] = select(func.count()).select_from(Item)
-        count: int = (await self._session.exec(statement=count_statement)).scalar_one()
-        statement: Select[tuple[Item]] = select(Item).offset(offset=skip).limit(limit=limit)
-        result: TupleResult = await self._session.exec(statement=statement)
-        items: list[Item] = [item for item, in result.all()]
-        return items, count
+        count_statement: SelectOfScalar = select(func.count()).select_from(Item.__table__)
+        count: int = (await self._session.exec(statement=count_statement)).one()
+        statement: SelectOfScalar = select(Item).offset(offset=skip).limit(limit=limit)
+        items_sequence: Sequence[Row | RowMapping | Any] = (await self._session.exec(statement=statement)).all()
+        items: list[Item] = [item for item, in items_sequence]
+        return ItemsPublic(data=items, count=count)
 
-    async def get_multi_by_owner(self, *, owner_id: UUID, skip: int = 0, limit: int = 100) -> tuple[list[Item], int]:
+    async def get_multi_by_owner(self, *, owner_id: UUID, skip: int = 0, limit: int = 100) -> ItemsPublic:
         """
         Retrieve multiple items from the database (for regular users).
 
         :param owner_id: The UUID of the user who owns the items.
         :param skip: The number of items to skip from the start of the query.
         :param limit: The maximum number of items to return.
-        :return: A tuple containing a list of items and the total count of items.
+        :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement: Select[tuple[int]] = select(func.count()).select_from(Item).filter_by(owner_id=owner_id)
-        count: int = (await self._session.exec(statement=count_statement)).scalar_one()
-        statement: Select[tuple[Item]] = (
-            select(Item).filter_by(owner_id=owner_id).offset(offset=skip).limit(limit=limit)
-        )
-        result: TupleResult = await self._session.exec(statement=statement)
+        count_statement = select(func.count()).select_from(Item.__table__).where(Item.owner_id == owner_id)
+        count: int = (await self._session.exec(statement=count_statement)).one()
+        statement: SelectOfScalar = select(Item).where(Item.owner_id == owner_id).offset(offset=skip).limit(limit=limit)
+        result: ScalarResult = await self._session.exec(statement=statement)
         items: list[Item] = [item for item, in result.all()]
-        return items, count
+        return ItemsPublic(data=items, count=count)
 
     async def update(self, *, db_item: Item, item_in: ItemUpdate) -> Item:
         """
@@ -99,3 +99,14 @@ class ItemCRUD(BaseCRUD):
             await self._session.delete(instance=db_item)
             await self._session.commit()
         return db_item
+
+    async def remove_by_owner(self, *, owner_id: UUID) -> None:
+        """
+        Remove all items belonging to a specific owner.
+
+        :param owner_id: UUID of the owner whose items will be deleted.
+        :return: None
+        """
+        statement: Delete = delete(Item).where(Item.owner_id == owner_id)
+        await self._session.exec(statement=statement)  # type: ignore
+        await self._session.commit()
