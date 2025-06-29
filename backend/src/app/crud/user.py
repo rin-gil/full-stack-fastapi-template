@@ -19,7 +19,7 @@ class UserCRUD(BaseCRUD):
 
     _security: SecurityManager = get_security_manager()
 
-    async def create(self, user_create: UserCreate) -> User:
+    async def create(self, *, user_create: UserCreate) -> User:
         """
         Create a new user in the database.
 
@@ -34,7 +34,7 @@ class UserCRUD(BaseCRUD):
         await self._session.refresh(instance=user_obj)
         return user_obj
 
-    async def update(self, db_user: User, user_in: UserUpdate) -> User:
+    async def update(self, *, db_user: User, user_in: UserUpdate) -> User:
         """
         Update an existing user in the database.
 
@@ -54,7 +54,7 @@ class UserCRUD(BaseCRUD):
         await self._session.refresh(instance=db_user)
         return db_user
 
-    async def get_by_id(self, user_id: UUID) -> User | None:
+    async def get_by_id(self, *, user_id: UUID) -> User | None:
         """
         Retrieve a user by their ID.
 
@@ -63,7 +63,7 @@ class UserCRUD(BaseCRUD):
         """
         return await self._session.get(User, user_id)
 
-    async def get_by_email(self, email: str) -> User | None:
+    async def get_by_email(self, *, email: str) -> User | None:
         """
         Retrieve a user by email.
 
@@ -74,7 +74,7 @@ class UserCRUD(BaseCRUD):
         result: TupleResult = await self._session.exec(statement=statement)
         return result.first()
 
-    async def authenticate(self, email: str, password: str) -> User | None:
+    async def authenticate(self, *, email: str, password: str) -> User | None:
         """
         Authenticate a user by email and password.
 
