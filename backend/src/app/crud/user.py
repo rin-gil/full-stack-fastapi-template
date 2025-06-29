@@ -1,6 +1,7 @@
 """Module for User CRUD operations for User model."""
 
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import Select
 from sqlalchemy.engine import TupleResult
@@ -52,6 +53,15 @@ class UserCRUD(BaseCRUD):
         await self._session.commit()
         await self._session.refresh(instance=db_user)
         return db_user
+
+    async def get_by_id(self, user_id: UUID) -> User | None:
+        """
+        Retrieve a user by their ID.
+
+        :param user_id: The UUID of the user.
+        :return: User object or None if not found.
+        """
+        return await self._session.get(User, user_id)
 
     async def get_by_email(self, email: str) -> User | None:
         """
