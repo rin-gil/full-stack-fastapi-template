@@ -3,11 +3,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, ScalarResult
-from sqlmodel import select
-
-# noinspection PyProtectedMember
-from sqlmodel.sql._expression_select_cls import SelectOfScalar
+from sqlmodel import func, select
 
 from app.core.security import SecurityManager, get_security_manager
 from app.crud.base import BaseCRUD
@@ -44,16 +40,25 @@ class UserCRUD(BaseCRUD):
         :param user_in: User update data
         :return: Updated User object
         """
-        user_data: dict[str, Any] = user_in.model_dump(exclude_unset=True)
-        extra_data: dict[str, str] = {}
-        if "password" in user_data:
-            password: str = user_data["password"]
-            hashed_password: str = self._security.get_password_hash(password=password)
+        user_data = user_in.model_dump(exclude_unset=True)
+        extra_data = {}
+
+        # ИСПРАВЛЕНИЕ:
+        # Проверяем не просто наличие ключа, а наличие непустого значения.
+        # .get("password") вернет None, если ключа нет, или вернет значение (например, "").
+        # Пустая строка "" в условии `if` расценивается как False.
+        if user_data.get("password"):
+            password = user_data["password"]
+            hashed_password = self._security.get_password_hash(password=password)
             extra_data["hashed_password"] = hashed_password
-        db_user.sqlmodel_update(obj=user_data, update=extra_data)
-        self._session.add(instance=db_user)
+            # Мы должны удалить пароль из основного словаря,
+            # чтобы он не пытался записаться в обычное поле модели.
+            del user_data["password"]
+
+        db_user.sqlmodel_update(user_data, update=extra_data)
+        self._session.add(db_user)
         await self._session.commit()
-        await self._session.refresh(instance=db_user)
+        await self._session.refresh(db_user)
         return db_user
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
@@ -72,9 +77,9 @@ class UserCRUD(BaseCRUD):
         :param email: User's email address
         :return: User object or None if not found
         """
-        statement: SelectOfScalar = select(User).where(User.email == email)
-        result: ScalarResult = await self._session.exec(statement=statement)
-        return result.first()
+        # ИСПРАВЛЕНИЕ: select(User) возвращает ScalarResult, из которого .first() достает один объект или None.
+        statement = select(User).where(User.email == email)
+        return (await self._session.exec(statement)).first()
 
     async def authenticate(self, *, email: str, password: str) -> User | None:
         """
@@ -84,7 +89,7 @@ class UserCRUD(BaseCRUD):
         :param password: User's password
         :return: Authenticated User object or None if authentication fails
         """
-        db_user: User | None = await self.get_by_email(email=email)
+        db_user = await self.get_by_email(email=email)
         if not db_user:
             return None
         if not self._security.verify_password(plain_password=password, hashed_password=db_user.hashed_password):
@@ -99,11 +104,14 @@ class UserCRUD(BaseCRUD):
         :param limit: The maximum number of users to return.
         :return: A UsersPublic object containing a list of users and the total count of users.
         """
-        count_statement: SelectOfScalar = select(func.count()).select_from(User.__table__)
-        count: int = (await self._session.exec(statement=count_statement)).one()
-        statement: SelectOfScalar = select(User).offset(skip).limit(limit)
-        result: ScalarResult = await self._session.exec(statement=statement)
-        users = [user for user, in result.all()]
+        # ИСПРАВЛЕНИЕ: Для ScalarResult правильный метод .one()
+        count_statement = select(func.count()).select_from(User)
+        count = (await self._session.exec(count_statement)).one()
+
+        # ИСПРАВЛЕНИЕ: select(User) возвращает ScalarResult, из которого .all() достает все объекты.
+        statement = select(User).offset(skip).limit(limit)
+        users = (await self._session.exec(statement)).all()
+
         return UsersPublic(data=users, count=count)
 
     async def remove(self, *, user_id: UUID) -> User | None:
@@ -113,7 +121,7 @@ class UserCRUD(BaseCRUD):
         :param user_id: The UUID of the user to delete.
         :return: The deleted User object, or None if no user was found.
         """
-        db_user: User | None = await self.get_by_id(user_id=user_id)
+        db_user = await self.get_by_id(user_id=user_id)
         if db_user:
             await self._session.delete(instance=db_user)
             await self._session.commit()

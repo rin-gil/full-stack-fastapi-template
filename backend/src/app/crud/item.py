@@ -1,13 +1,10 @@
 """Module for User CRUD operations for Item model."""
 
-from typing import Any, Type, Sequence
+from typing import Any, Type
 from uuid import UUID
 
-from sqlalchemy import delete, Row, RowMapping, ScalarResult, Delete
+from sqlalchemy import delete
 from sqlmodel import func, select
-
-# noinspection PyProtectedMember
-from sqlmodel.sql._expression_select_cls import SelectOfScalar
 
 from app.crud.base import BaseCRUD
 from app.models import Item, ItemCreate, ItemUpdate, ItemsPublic
@@ -32,14 +29,14 @@ class ItemCRUD(BaseCRUD):
         await self._session.refresh(instance=db_item)
         return db_item
 
-    async def get(self, item_id: UUID) -> Item | None:
+    async def get(self, *, item_id: UUID) -> Item | None:
         """
         Retrieve an item by their ID.
 
         :param item_id: The UUID of the item.
         :return: Item object or None if not found.
         """
-        return await self._session.get(entity=Item, ident=(item_id,))
+        return await self._session.get(entity=Item, ident=item_id)
 
     async def get_multi(self, *, skip: int = 0, limit: int = 100) -> ItemsPublic:
         """
@@ -49,11 +46,13 @@ class ItemCRUD(BaseCRUD):
         :param limit: The maximum number of items to return.
         :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement: SelectOfScalar = select(func.count()).select_from(Item.__table__)
-        count: int = (await self._session.exec(statement=count_statement)).one()
-        statement: SelectOfScalar = select(Item).offset(offset=skip).limit(limit=limit)
-        items_sequence: Sequence[Row | RowMapping | Any] = (await self._session.exec(statement=statement)).all()
-        items: list[Item] = [item for item, in items_sequence]
+        count_statement = select(func.count()).select_from(Item)
+        count = (await self._session.exec(count_statement)).one()
+
+        statement = select(Item).offset(skip).limit(limit)
+        # ИСПРАВЛЕНО: .scalars() здесь не нужен. .all() вызывается прямо на результате.
+        items = (await self._session.exec(statement)).all()
+
         return ItemsPublic(data=items, count=count)
 
     async def get_multi_by_owner(self, *, owner_id: UUID, skip: int = 0, limit: int = 100) -> ItemsPublic:
@@ -65,11 +64,13 @@ class ItemCRUD(BaseCRUD):
         :param limit: The maximum number of items to return.
         :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement = select(func.count()).select_from(Item.__table__).where(Item.owner_id == owner_id)
-        count: int = (await self._session.exec(statement=count_statement)).one()
-        statement: SelectOfScalar = select(Item).where(Item.owner_id == owner_id).offset(offset=skip).limit(limit=limit)
-        result: ScalarResult = await self._session.exec(statement=statement)
-        items: list[Item] = [item for item, in result.all()]
+        count_statement = select(func.count()).select_from(Item).filter_by(owner_id=owner_id)
+        count = (await self._session.exec(count_statement)).one()
+
+        statement = select(Item).filter_by(owner_id=owner_id).offset(skip).limit(limit)
+        # ИСПРАВЛЕНО: .scalars() здесь не нужен. .all() вызывается прямо на результате.
+        items = (await self._session.exec(statement)).all()
+
         return ItemsPublic(data=items, count=count)
 
     async def update(self, *, db_item: Item, item_in: ItemUpdate) -> Item:
@@ -94,7 +95,7 @@ class ItemCRUD(BaseCRUD):
         :param item_id: The UUID of the item to delete.
         :return: The deleted item, or None if no item was found.
         """
-        db_item: Type[Item] | None = await self._session.get(entity=Item, ident=(item_id,))
+        db_item = await self.get(item_id=item_id)
         if db_item:
             await self._session.delete(instance=db_item)
             await self._session.commit()
@@ -107,6 +108,8 @@ class ItemCRUD(BaseCRUD):
         :param owner_id: UUID of the owner whose items will be deleted.
         :return: None
         """
-        statement: Delete = delete(Item).where(Item.owner_id == owner_id)
-        await self._session.exec(statement=statement)  # type: ignore
+        statement = delete(Item).where(Item.owner_id == owner_id)
+        # ИСПОЛЬЗУЕМ session.execute() для операций, не являющихся SELECT.
+        # Это правильный, эффективный и современный способ.
+        await self._session.execute(statement)
         await self._session.commit()
