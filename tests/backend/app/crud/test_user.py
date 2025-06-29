@@ -66,13 +66,15 @@ async def test_user_crud_update(
     mocker.patch.object(target=UserCRUD, attribute="_security", new=security_mock)
     user_crud: UserCRUD = UserCRUD(session=session_mock)
     db_user_mock: MagicMock = MagicMock(spec=User)
-    user_data: dict[str, Any] = user_in.model_dump(exclude_unset=True)
+    expected_user_data: dict[str, Any] = user_in.model_dump(exclude_unset=True)
+    if "password" in expected_user_data:
+        del expected_user_data["password"]
     result: User = await user_crud.update(db_user=db_user_mock, user_in=user_in)
     if security_called:
         security_mock.get_password_hash.assert_called_once_with(password="new_password")
     else:
         security_mock.get_password_hash.assert_not_called()
-    db_user_mock.sqlmodel_update.assert_called_once_with(obj=user_data, update=update_dict)
+    db_user_mock.sqlmodel_update.assert_called_once_with(obj=expected_user_data, update=update_dict)
     session_mock.add.assert_called_once_with(instance=db_user_mock)
     session_mock.commit.assert_called_once()
     session_mock.refresh.assert_called_once_with(instance=db_user_mock)
@@ -85,7 +87,7 @@ async def test_user_crud_get_by_id(user_in_db: User | None) -> None:
     """
     Test the get_by_id method of UserCRUD for both found and not found scenarios.
 
-    :param user_in_db: User object to be returned by the session.get method.
+    :param user_in_db: User object to be returned by the 'session.get' method.
     :return: None
     """
     session_mock: AsyncMock = AsyncMock(spec=AsyncSession)
@@ -125,11 +127,7 @@ async def test_user_crud_get_by_email(user_in_db: User | None) -> None:
             True,
             None,
         ),
-        (
-            None,
-            False,
-            None,
-        ),
+        (None, False, None),
         (
             MagicMock(spec=User, hashed_password="incorrect_hash", email="test@example.com", full_name="Test User"),
             False,
@@ -174,23 +172,8 @@ async def test_user_crud_authenticate(
 @pytest.mark.parametrize(
     "skip, limit, users_count, expected_users",
     [
-        (
-            0,
-            100,
-            2,
-            [
-                User(email="user1@example.com", full_name="User One", hashed_password="hash1", id=uuid4()),
-                User(email="user2@example.com", full_name="User Two", hashed_password="hash2", id=uuid4()),
-            ],
-        ),
-        (
-            1,
-            1,
-            2,
-            [
-                User(email="user2@example.com", full_name="User Two", hashed_password="hash2", id=uuid4()),
-            ],
-        ),
+        (0, 100, 2, [User(email="user1@example.com"), User(email="user2@example.com")]),
+        (1, 1, 2, [User(email="user2@example.com")]),
         (0, 100, 0, []),
     ],
     ids=["default_pagination", "skip_and_limit", "empty_result"],
@@ -209,7 +192,7 @@ async def test_user_crud_get_multi(skip: int, limit: int, users_count: int, expe
     user_crud: UserCRUD = UserCRUD(session=session_mock)
     session_mock.exec.side_effect = [
         MagicMock(one=MagicMock(return_value=users_count)),
-        MagicMock(all=MagicMock(return_value=[(user,) for user in expected_users])),
+        MagicMock(all=MagicMock(return_value=expected_users)),
     ]
     result: UsersPublic = await user_crud.get_multi(skip=skip, limit=limit)
     assert session_mock.exec.call_count == 2
