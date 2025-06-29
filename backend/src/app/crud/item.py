@@ -1,10 +1,13 @@
 """Module for User CRUD operations for Item model."""
 
-from typing import Any, Type
+from typing import Any, Sequence
 from uuid import UUID
 
-from sqlalchemy import delete
+from sqlalchemy import delete, Row, RowMapping, Delete
 from sqlmodel import func, select
+
+# noinspection PyProtectedMember
+from sqlmodel.sql._expression_select_cls import SelectOfScalar
 
 from app.crud.base import BaseCRUD
 from app.models import Item, ItemCreate, ItemUpdate, ItemsPublic
@@ -46,13 +49,10 @@ class ItemCRUD(BaseCRUD):
         :param limit: The maximum number of items to return.
         :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement = select(func.count()).select_from(Item)
-        count = (await self._session.exec(count_statement)).one()
-
-        statement = select(Item).offset(skip).limit(limit)
-        # ИСПРАВЛЕНО: .scalars() здесь не нужен. .all() вызывается прямо на результате.
-        items = (await self._session.exec(statement)).all()
-
+        count_statement: SelectOfScalar = select(func.count()).select_from(Item.__table__)
+        count: int = (await self._session.exec(statement=count_statement)).one()
+        statement: SelectOfScalar = select(Item).offset(skip).limit(limit)
+        items: Sequence[Row | RowMapping] = (await self._session.exec(statement=statement)).all()
         return ItemsPublic(data=items, count=count)
 
     async def get_multi_by_owner(self, *, owner_id: UUID, skip: int = 0, limit: int = 100) -> ItemsPublic:
@@ -64,13 +64,12 @@ class ItemCRUD(BaseCRUD):
         :param limit: The maximum number of items to return.
         :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement = select(func.count()).select_from(Item).filter_by(owner_id=owner_id)
-        count = (await self._session.exec(count_statement)).one()
-
-        statement = select(Item).filter_by(owner_id=owner_id).offset(skip).limit(limit)
-        # ИСПРАВЛЕНО: .scalars() здесь не нужен. .all() вызывается прямо на результате.
-        items = (await self._session.exec(statement)).all()
-
+        count_statement: SelectOfScalar = (
+            select(func.count()).select_from(Item.__table__).where(Item.owner_id == owner_id)
+        )
+        count: int = (await self._session.exec(statement=count_statement)).one()
+        statement: SelectOfScalar = select(Item).where(Item.owner_id == owner_id).offset(skip).limit(limit)
+        items: Sequence[Row | RowMapping] = (await self._session.exec(statement=statement)).all()
         return ItemsPublic(data=items, count=count)
 
     async def update(self, *, db_item: Item, item_in: ItemUpdate) -> Item:
@@ -95,7 +94,7 @@ class ItemCRUD(BaseCRUD):
         :param item_id: The UUID of the item to delete.
         :return: The deleted item, or None if no item was found.
         """
-        db_item = await self.get(item_id=item_id)
+        db_item: Item | None = await self.get(item_id=item_id)
         if db_item:
             await self._session.delete(instance=db_item)
             await self._session.commit()
@@ -108,8 +107,6 @@ class ItemCRUD(BaseCRUD):
         :param owner_id: UUID of the owner whose items will be deleted.
         :return: None
         """
-        statement = delete(Item).where(Item.owner_id == owner_id)
-        # ИСПОЛЬЗУЕМ session.execute() для операций, не являющихся SELECT.
-        # Это правильный, эффективный и современный способ.
-        await self._session.execute(statement)
+        statement: Delete = delete(Item).where(Item.owner_id == owner_id)
+        await self._session.exec(statement=statement)  # type: ignore
         await self._session.commit()

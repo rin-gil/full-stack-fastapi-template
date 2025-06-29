@@ -95,7 +95,7 @@ async def test_item_crud_get(session_mock: AsyncSession, item_exists: bool, item
     )
     session_mock.get.return_value = db_item
     result: Item | None = await item_crud.get(item_id=item_id)
-    session_mock.get.assert_called_once_with(entity=Item, ident=(item_id,))
+    session_mock.get.assert_called_once_with(entity=Item, ident=item_id)
     assert result == db_item, f"Expected {'item' if item_exists else 'None'}, got {result}"
 
 
@@ -141,7 +141,7 @@ async def test_item_crud_get_multi(
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
     session_mock.exec.side_effect = [
         MagicMock(one=MagicMock(return_value=items_count)),
-        MagicMock(all=MagicMock(return_value=[(item,) for item in expected_items])),
+        MagicMock(all=MagicMock(return_value=expected_items)),
     ]
     result: ItemsPublic = await item_crud.get_multi(skip=skip, limit=limit)
     assert session_mock.exec.call_count == 2
@@ -201,7 +201,7 @@ async def test_item_crud_get_multi_by_owner(
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
     session_mock.exec.side_effect = [
         MagicMock(one=MagicMock(return_value=items_count)),
-        MagicMock(all=MagicMock(return_value=[(item,) for item in expected_items])),
+        MagicMock(all=MagicMock(return_value=expected_items)),
     ]
     result: ItemsPublic = await item_crud.get_multi_by_owner(owner_id=owner_id, skip=skip, limit=limit)
     assert session_mock.exec.call_count == 2
@@ -237,14 +237,13 @@ async def test_item_crud_update(
     :return: None
     """
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
-    db_item: Item = Item(title="Original Title", description="Original Description", owner_id=uuid4())
+    db_item: Item = MagicMock(spec=Item)
     result: Item = await item_crud.update(db_item=db_item, item_in=update_data)
-    assert db_item.title == expected_update.get("title", db_item.title)
-    assert db_item.description == expected_update.get("description", db_item.description)
+    db_item.sqlmodel_update.assert_called_once_with(obj=expected_update)
     session_mock.add.assert_called_once_with(instance=db_item)
     session_mock.commit.assert_called_once()
     session_mock.refresh.assert_called_once_with(instance=db_item)
-    assert result == db_item, "Returned item should match the updated item"
+    assert result is db_item, "Returned item should match the updated item"
 
 
 # noinspection PyUnresolvedReferences
@@ -265,9 +264,9 @@ async def test_item_crud_remove(session_mock: AsyncSession, item_exists: bool, i
     db_item: Item | None = (
         Item(title="Test Item", description="Test Description", owner_id=uuid4()) if item_exists else None
     )
-    session_mock.get.return_value = db_item
+    item_crud.get = AsyncMock(return_value=db_item)
     result: Item | None = await item_crud.remove(item_id=item_id)
-    session_mock.get.assert_called_once_with(entity=Item, ident=(item_id,))
+    item_crud.get.assert_called_once_with(item_id=item_id)
     if item_exists:
         session_mock.delete.assert_called_once_with(instance=db_item)
         session_mock.commit.assert_called_once()
@@ -290,7 +289,6 @@ async def test_item_crud_remove_by_owner(session_mock: AsyncSession, items_exist
     :return: None
     """
     item_crud: ItemCRUD = ItemCRUD(session=session_mock)
-    session_mock.exec.return_value = MagicMock() if items_exist else MagicMock()
     await item_crud.remove_by_owner(owner_id=owner_id)
     session_mock.exec.assert_called_once_with(statement=ANY)
     session_mock.commit.assert_called_once()
