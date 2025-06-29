@@ -204,6 +204,7 @@ async def test_get_db_manager_caching(
     :param mocker: Pytest-mock fixture for mocking.
     :return: None
     """
+    get_db_manager.cache_clear()
     mock_get_settings: Any = mocker.patch(target="app.core.db.get_settings", return_value=mock_settings)
     mocker.patch(target="app.core.db.create_async_engine", return_value=mock_async_engine)
     mocker.patch(target="app.core.db.async_sessionmaker", return_value=mock_async_session_factory)
