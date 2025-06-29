@@ -3,13 +3,15 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select
-from sqlalchemy.engine import TupleResult
+from sqlalchemy import func, ScalarResult
 from sqlmodel import select
+
+# noinspection PyProtectedMember
+from sqlmodel.sql._expression_select_cls import SelectOfScalar
 
 from app.core.security import SecurityManager, get_security_manager
 from app.crud.base import BaseCRUD
-from app.models import User, UserCreate, UserUpdate
+from app.models import User, UserCreate, UserUpdate, UsersPublic
 
 __all__: tuple[str] = ("UserCRUD",)
 
@@ -61,7 +63,7 @@ class UserCRUD(BaseCRUD):
         :param user_id: The UUID of the user.
         :return: User object or None if not found.
         """
-        return await self._session.get(User, user_id)
+        return await self._session.get(entity=User, ident=user_id)
 
     async def get_by_email(self, *, email: str) -> User | None:
         """
@@ -70,8 +72,8 @@ class UserCRUD(BaseCRUD):
         :param email: User's email address
         :return: User object or None if not found
         """
-        statement: Select[tuple[User]] = select(User).where(User.email == email)
-        result: TupleResult = await self._session.exec(statement=statement)
+        statement: SelectOfScalar = select(User).where(User.email == email)
+        result: ScalarResult = await self._session.exec(statement=statement)
         return result.first()
 
     async def authenticate(self, *, email: str, password: str) -> User | None:
@@ -87,4 +89,32 @@ class UserCRUD(BaseCRUD):
             return None
         if not self._security.verify_password(plain_password=password, hashed_password=db_user.hashed_password):
             return None
+        return db_user
+
+    async def get_multi(self, *, skip: int = 0, limit: int = 100) -> UsersPublic:
+        """
+        Retrieve multiple users from the database (for superusers).
+
+        :param skip: The number of users to skip from the start of the query.
+        :param limit: The maximum number of users to return.
+        :return: A UsersPublic object containing a list of users and the total count of users.
+        """
+        count_statement: SelectOfScalar = select(func.count()).select_from(User.__table__)
+        count: int = (await self._session.exec(statement=count_statement)).one()
+        statement: SelectOfScalar = select(User).offset(skip).limit(limit)
+        result: ScalarResult = await self._session.exec(statement=statement)
+        users = [user for user, in result.all()]
+        return UsersPublic(data=users, count=count)
+
+    async def remove(self, *, user_id: UUID) -> User | None:
+        """
+        Deletes a user from the database.
+
+        :param user_id: The UUID of the user to delete.
+        :return: The deleted User object, or None if no user was found.
+        """
+        db_user: User | None = await self.get_by_id(user_id=user_id)
+        if db_user:
+            await self._session.delete(instance=db_user)
+            await self._session.commit()
         return db_user

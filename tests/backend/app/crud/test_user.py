@@ -1,7 +1,7 @@
 """Unit tests for backend/src/app/crud/user.py"""
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, ANY
 from uuid import UUID, uuid4
 
 import pytest
@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.security import SecurityManager
 from app.crud.user import UserCRUD
-from app.models import User, UserCreate, UserUpdate
+from app.models import User, UserCreate, UserUpdate, UsersPublic
 
 __all__: tuple = ()
 
@@ -93,8 +93,8 @@ async def test_user_crud_get_by_id(user_in_db: User | None) -> None:
     user_crud: UserCRUD = UserCRUD(session=session_mock)
     user_id: UUID = uuid4()
     result: User | None = await user_crud.get_by_id(user_id=user_id)
-    session_mock.get.assert_called_once_with(User, user_id)
-    assert result is user_in_db
+    session_mock.get.assert_called_once_with(entity=User, ident=user_id)
+    assert result is user_in_db, f"Expected {user_in_db}, got {result}"
 
 
 @pytest.mark.asyncio
@@ -120,9 +120,21 @@ async def test_user_crud_get_by_email(user_in_db: User | None) -> None:
 @pytest.mark.parametrize(
     "user_in_db, password_is_valid, expected_result",
     [
-        (MagicMock(spec=User, hashed_password="correct_hash"), True, None),
-        (None, False, None),
-        (MagicMock(spec=User, hashed_password="some_hash"), False, None),
+        (
+            MagicMock(spec=User, hashed_password="correct_hash", email="test@example.com", full_name="Test User"),
+            True,
+            None,
+        ),
+        (
+            None,
+            False,
+            None,
+        ),
+        (
+            MagicMock(spec=User, hashed_password="incorrect_hash", email="test@example.com", full_name="Test User"),
+            False,
+            None,
+        ),
     ],
     ids=["success", "user_not_found", "invalid_password"],
 )
@@ -154,4 +166,79 @@ async def test_user_crud_authenticate(
         )
     else:
         security_mock.verify_password.assert_not_called()
-    assert result is (user_in_db if password_is_valid else expected_result)
+    expected_result = user_in_db if password_is_valid else None
+    assert result is expected_result, f"Expected {expected_result}, got {result}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "skip, limit, users_count, expected_users",
+    [
+        (
+            0,
+            100,
+            2,
+            [
+                User(email="user1@example.com", full_name="User One", hashed_password="hash1", id=uuid4()),
+                User(email="user2@example.com", full_name="User Two", hashed_password="hash2", id=uuid4()),
+            ],
+        ),
+        (
+            1,
+            1,
+            2,
+            [
+                User(email="user2@example.com", full_name="User Two", hashed_password="hash2", id=uuid4()),
+            ],
+        ),
+        (0, 100, 0, []),
+    ],
+    ids=["default_pagination", "skip_and_limit", "empty_result"],
+)
+async def test_user_crud_get_multi(skip: int, limit: int, users_count: int, expected_users: list[User]) -> None:
+    """
+    Test the get_multi method of UserCRUD.
+
+    :param skip: Number of users to skip.
+    :param limit: Maximum number of users to return.
+    :param users_count: Total number of users in the database.
+    :param expected_users: Expected list of users to be returned.
+    :return: None
+    """
+    session_mock: AsyncMock = AsyncMock(spec=AsyncSession)
+    user_crud: UserCRUD = UserCRUD(session=session_mock)
+    session_mock.exec.side_effect = [
+        MagicMock(one=MagicMock(return_value=users_count)),
+        MagicMock(all=MagicMock(return_value=[(user,) for user in expected_users])),
+    ]
+    result: UsersPublic = await user_crud.get_multi(skip=skip, limit=limit)
+    assert session_mock.exec.call_count == 2
+    session_mock.exec.assert_any_call(statement=ANY)
+    session_mock.exec.assert_any_call(statement=ANY)
+    assert result == UsersPublic(
+        data=expected_users, count=users_count
+    ), f"Expected UsersPublic(data={expected_users}, count={users_count}), got {result}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("user_in_db", [MagicMock(spec=User), None], ids=["user_found", "user_not_found"])
+async def test_user_crud_remove(user_in_db: User | None) -> None:
+    """
+    Test the remove method of UserCRUD.
+
+    :param user_in_db: User object to be returned by the get_by_id method.
+    :return: None
+    """
+    session_mock: AsyncMock = AsyncMock(spec=AsyncSession)
+    user_crud: UserCRUD = UserCRUD(session=session_mock)
+    user_id: UUID = uuid4()
+    user_crud.get_by_id = AsyncMock(return_value=user_in_db)
+    result: User | None = await user_crud.remove(user_id=user_id)
+    user_crud.get_by_id.assert_called_once_with(user_id=user_id)
+    if user_in_db:
+        session_mock.delete.assert_called_once_with(instance=user_in_db)
+        session_mock.commit.assert_called_once()
+    else:
+        session_mock.delete.assert_not_called()
+        session_mock.commit.assert_not_called()
+    assert result is user_in_db, f"Expected {user_in_db}, got {result}"
