@@ -21,7 +21,7 @@ private_router: APIRouter = APIRouter()
 
 @cbv(router=private_router)
 class PrivateRouter:
-    """Router for private endpoints."""
+    """Class-based view for private endpoints."""
 
     def __init__(self, user_crud: UserCRUDDep, email_manager: EmailManagerDep, settings: SettingsDep) -> None:
         """
