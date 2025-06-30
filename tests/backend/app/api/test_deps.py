@@ -10,7 +10,13 @@ from pytest_mock import MockerFixture
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 # noinspection PyProtectedMember
-from app.api.deps import ActiveSuperuserProvider, CurrentUserProvider, ItemCRUDProvider, UserCRUDProvider
+from app.api.deps import (
+    ActiveSuperuserProvider,
+    CurrentUserProvider,
+    OptionalCurrentUserProvider,
+    ItemCRUDProvider,
+    UserCRUDProvider,
+)
 from app.core.security import SecurityManager
 from app.crud.item import ItemCRUD
 from app.crud.user import UserCRUD
@@ -49,7 +55,7 @@ async def test_item_crud_provider() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "token_payload, user, raises_exception, expected_status, expected_detail",
+    "token_payload,user,raises_exception,expected_status,expected_detail",
     [
         ({"sub": str(uuid4())}, MagicMock(spec=User, is_active=True), False, None, None),
         ({"sub": str(uuid4())}, None, True, 404, "User not found"),
@@ -81,7 +87,7 @@ async def test_current_user_provider(
     user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUD)
     user_crud_mock.get_by_id.return_value = user
     token: str = "mocked_token"
-    _: MagicMock = mocker.patch(target="app.api.deps.settings")
+    mocker.patch(target="app.api.deps.settings")
     security_mock: SecurityManager = MagicMock(spec=SecurityManager)
     security_mock.ALGORITHM = "HS256"
     current_user_provider: CurrentUserProvider = CurrentUserProvider()
@@ -102,9 +108,55 @@ async def test_current_user_provider(
         assert result is user
 
 
+# noinspection PyPropertyAccess,PyUnresolvedReferences
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "is_superuser, raises_exception, expected_status, expected_detail",
+    "token,user,expected_result",
+    [
+        (None, None, None),
+        ("mocked_token", None, None),
+        ("mocked_token", MagicMock(spec=User, is_active=False), None),
+        pytest.param("mocked_token", MagicMock(spec=User, is_active=True), None, marks=pytest.mark.xfail),
+    ],
+    ids=["no_token", "invalid_token", "inactive_user", "active_user"],
+)
+async def test_optional_current_user_provider(
+    mocker: MockerFixture, token: str | None, user: User | None, expected_result: User | None
+) -> None:
+    """
+    Test the OptionalCurrentUserProvider class for various scenarios.
+
+    :param mocker: Pytest mocker fixture.
+    :param token: Mocked JWT token or None.
+    :param user: Mocked User object or None.
+    :param expected_result: Expected result (User or None).
+    :return: None
+    """
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUD)
+    user_crud_mock.get_by_id.return_value = user
+    security_mock: SecurityManager = MagicMock(spec=SecurityManager)
+    security_mock.ALGORITHM = "HS256"
+    optional_current_user_provider: OptionalCurrentUserProvider = OptionalCurrentUserProvider()
+    mocker.patch(target="app.api.deps.settings")
+    user_id: UUID = uuid4()
+    if token and user:
+        mocker.patch(target="jwt.decode", return_value={"sub": str(user_id)})
+    elif token:
+        mocker.patch(target="jwt.decode", side_effect=InvalidTokenError("Invalid token"))
+    result: User | None = await optional_current_user_provider(
+        token=token, user_crud=user_crud_mock, security_manager=security_mock
+    )
+    if token and user:
+        user_crud_mock.get_by_id.assert_called_once_with(user_id=user_id)
+    else:
+        user_crud_mock.get_by_id.assert_not_called()
+    assert result == (user if user and user.is_active else None)
+
+
+# noinspection PyPropertyAccess,PyUnresolvedReferences
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "is_superuser,raises_exception,expected_status,expected_detail",
     [(True, False, None, None), (False, True, 403, "The user doesn't have enough privileges")],
     ids=["superuser", "not_superuser"],
 )
