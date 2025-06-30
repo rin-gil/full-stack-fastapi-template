@@ -1,106 +1,129 @@
-# app/api/routes/items.py
+"""Module for items endpoints."""
 
-import uuid
-from typing import Any, Annotated
+from typing import Annotated, Any, Type
+from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, status
+from fastapi_utils.cbv import cbv
 
-# ИЗМЕНЕНИЕ: Импортируем наши новые, правильные зависимости
-from app.api.deps import CurrentUser, ItemCRUDDep
+from app.api.deps import CurrentUser, ItemCRUDDep, OptionalCurrentUser
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
 
-router = APIRouter(prefix="/items", tags=["items"])
+__all__: tuple[str, ...] = ("items_router",)
 
 
-@router.get("/", response_model=ItemsPublic)
-async def read_items(
-        item_crud: ItemCRUDDep,
-        current_user: CurrentUser,
-        skip: int = 0,
-        limit: int = 100,
-) -> Any:
-    """
-    Получение списка items.
-    Суперпользователь видит все, обычный пользователь - только свои.
-    """
-    if current_user.is_superuser:
-        items: ItemsPublic = await item_crud.get_multi(skip=skip, limit=limit)
-    else:
-        items = await item_crud.get_multi_by_owner(
-            owner_id=current_user.id, skip=skip, limit=limit
-        )
-    return items
+ItemIDDep: Type[UUID] = Annotated[UUID, Path(alias="id", description="ID элемента")]
+
+items_router: APIRouter = APIRouter()
 
 
-@router.post("/", response_model=ItemPublic)
-async def create_item(
-        *,
-        item_crud: ItemCRUDDep,
-        current_user: CurrentUser,
-        item_in: ItemCreate,
-) -> Any:
-    """
-    Создание нового item.
-    """
-    # Вся логика создания скрыта в одном методе
-    item = await item_crud.create_with_owner(item_in=item_in, owner_id=current_user.id)
-    return item
+@cbv(router=items_router)
+class ItemsRouter:
+    """Class-based view for item endpoints."""
 
+    def __init__(self, item_crud: ItemCRUDDep, current_user: OptionalCurrentUser) -> None:
+        """
+        Initializes the ItemsRouter class with the necessary dependencies.
 
-@router.get("/{id}", response_model=ItemPublic)
-async def read_item(
-        item_crud: ItemCRUDDep,
-        current_user: CurrentUser,
-        item_id: Annotated[uuid.UUID, Path(alias="id", description="ID элемента")],
-) -> Any:
-    """
-    Получение item по ID.
-    """
-    item = await item_crud.get(item_id=item_id)
-    # Логика прав доступа остается в роутере - это его ответственность
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    if not current_user.is_superuser and (item.owner_id != current_user.id):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    return item
+        :param item_crud: Dependency for item CRUD operations.
+        :param current_user: Dependency for the current authorized user.
+        """
+        self._item_crud: ItemCRUDDep = item_crud
+        self._current_user: CurrentUser = current_user
 
+    async def _get_and_validate_item(self, item_id: UUID) -> Item:
+        """
+        Private helper to retrieve an item by ID and validate user permissions.
 
-@router.put("/{id}", response_model=ItemPublic)
-async def update_item(
-        *,
-        item_crud: ItemCRUDDep,
-        current_user: CurrentUser,
-        item_id: Annotated[uuid.UUID, Path(alias="id", description="ID элемента")],
-        item_in: ItemUpdate,
-) -> Any:
-    """
-    Обновление item.
-    """
-    db_item = await item_crud.get(item_id=item_id)
-    if not db_item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    if not current_user.is_superuser and (db_item.owner_id != current_user.id):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+        :param item_id: The ID of the item to retrieve.
+        :return: The validated item object.
+        :raises HTTPException: 404 if not found, 403 if no permission.
+        """
+        if not self._current_user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        db_item: Item = await self._item_crud.get(item_id=item_id)
+        if not db_item:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+        if not self._current_user.is_superuser and (db_item.owner_id != self._current_user.id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        return db_item
 
-    # Вся логика обновления скрыта в одном методе
-    item = await item_crud.update(db_item=db_item, item_in=item_in)
-    return item
+    @items_router.get(
+        path="/",
+        response_model=ItemsPublic,
+        summary="Read Items",
+        description="Getting the list of items. Anonymous users get an empty list.",
+    )
+    async def read_items(self, skip: int = 0, limit: int = 100) -> Any:
+        """
+        Endpoint for retrieving a list of items.
 
+        :param skip: The number of items to skip.
+        :param limit: The maximum number of items to return.
+        :return: A list of items.
+        """
+        if not self._current_user:
+            return ItemsPublic(data=[], count=0)
+        if self._current_user.is_superuser:
+            items: ItemsPublic = await self._item_crud.get_multi(skip=skip, limit=limit)
+        else:
+            items = await self._item_crud.get_multi_by_owner(
+                owner_id=self._current_user.id, skip=skip, limit=limit
+            )
+        return items
 
-@router.delete("/{id}", response_model=Message)
-async def delete_item(
-        item_crud: ItemCRUDDep,
-        current_user: CurrentUser,
-        item_id: Annotated[uuid.UUID, Path(alias="id", description="ID элемента")],
-) -> Message:
-    """
-    Удаление item.
-    """
-    db_item = await item_crud.get(item_id=item_id)
-    if not db_item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    if not current_user.is_superuser and (db_item.owner_id != current_user.id):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    @items_router.post(
+        path="/",
+        response_model=ItemPublic,
+        status_code=status.HTTP_201_CREATED,
+        summary="Create Item",
+        description="Creating a new Item.",
+    )
+    async def create_item(self, *, item_in: ItemCreate) -> Item:
+        """
+        Endpoint for creating a new item.
 
-    await item_crud.remove(item_id=item_id)
-    return Message(message="Item deleted successfully")
+        :param item_in: The data for the item to be created.
+        :return: The newly created item.
+        :raises HTTPException: 401 if not authenticated.
+        """
+        if not self._current_user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        item: Item = await self._item_crud.create_with_owner(item_in=item_in, owner_id=self._current_user.id)
+        return item
+
+    @items_router.get(
+        path="/{id}", response_model=ItemPublic, summary="Read Item by ID", description="Getting an item by ID."
+    )
+    async def read_item(self, item_id: ItemIDDep) -> Any:
+        """
+        Endpoint for retrieving an item by its ID.
+
+        :param item_id: The ID of the item to retrieve.
+        :return: The requested item.
+        """
+        return await self._get_and_validate_item(item_id=item_id)
+
+    @items_router.put(path="/{id}", response_model=ItemPublic, summary="Update Item", description="Item update.")
+    async def update_item(self, *, item_id: ItemIDDep, item_in: ItemUpdate) -> Item:
+        """
+        Endpoint for updating an existing item.
+
+        :param item_id: The ID of the item to update.
+        :param item_in: The new data for the item.
+        :return: The updated item.
+        """
+        db_item: Item = await self._get_and_validate_item(item_id=item_id)
+        return await self._item_crud.update(db_item=db_item, item_in=item_in)
+
+    @items_router.delete(path="/{id}", response_model=Message, summary="Delete Item", description="Deleting an Item.")
+    async def delete_item(self, item_id: ItemIDDep) -> Message:
+        """
+        Endpoint for deleting an item.
+
+        :param item_id: The ID of the item to delete.
+        :return: A message confirming the deletion.
+        """
+        await self._get_and_validate_item(item_id=item_id)
+        await self._item_crud.remove(item_id=item_id)
+        return Message(message="Item deleted successfully")
