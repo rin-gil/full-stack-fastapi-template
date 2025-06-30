@@ -10,7 +10,7 @@ from app.api.deps import CurrentSuperuser
 from app.core.emails import EmailManager, get_email_manager
 from app.models import Message
 
-__all__: tuple[str, ...] = ("utils_router",)
+__all__: tuple[str] = ("utils_router",)
 
 
 EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
