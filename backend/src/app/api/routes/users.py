@@ -22,7 +22,7 @@ from app.models import (
     UsersPublic,
 )
 
-__all__: tuple[str, ...] = ("users_router",)
+__all__: tuple[str] = ("users_router",)
 
 EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
 SettingsDep: Type[Settings] = Annotated[Settings, Depends(get_settings)]
