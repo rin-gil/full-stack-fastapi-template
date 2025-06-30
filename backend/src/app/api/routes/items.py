@@ -9,7 +9,7 @@ from fastapi_utils.cbv import cbv
 from app.api.deps import CurrentUser, ItemCRUDDep, OptionalCurrentUser
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
 
-__all__: tuple[str, ...] = ("items_router",)
+__all__: tuple[str] = ("items_router",)
 
 
 ItemIDDep: Type[UUID] = Annotated[UUID, Path(alias="id", description="ID элемента")]
