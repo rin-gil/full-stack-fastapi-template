@@ -3,6 +3,7 @@
 from functools import lru_cache
 from typing import AsyncGenerator
 
+from sqlalchemy import text
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
 
@@ -53,7 +54,7 @@ class DatabaseManager:
         :return: None
         """
         async with self._async_engine.begin() as conn:
-            await conn.run_sync(lambda sync_conn: sync_conn.execute("SELECT 1"))
+            await conn.run_sync(lambda sync_conn: sync_conn.execute(text("SELECT 1")))
 
     async def close_database_connection(self) -> None:
         """
