@@ -16,7 +16,7 @@ __all__: tuple[str, ...] = ("private_router",)
 EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
 SettingsDep: Type[Settings] = Annotated[Settings, Depends(get_settings)]
 
-private_router: APIRouter = APIRouter(tags=["private"], prefix="/private")
+private_router: APIRouter = APIRouter()
 
 
 @cbv(router=private_router)
