@@ -193,7 +193,7 @@ class EmailManager:
         await self._send_email(email_to=email_to, subject=subject, html_content=html_content)
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_email_manager() -> EmailManager:
     """
     Gets the EmailManager object. The lru_cache decorator ensures this function is only called once.

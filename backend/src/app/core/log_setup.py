@@ -74,7 +74,7 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_logger() -> Logger:
     """
     Gets the Logger object. The lru_cache decorator ensures this function is only called once.

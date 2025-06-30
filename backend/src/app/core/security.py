@@ -58,7 +58,7 @@ class SecurityManager:
         return self._pwd_context.hash(secret=password)
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_security_manager() -> SecurityManager:
     """
     Gets the SecurityManager object. The lru_cache decorator ensures this function is only called once.

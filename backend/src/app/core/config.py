@@ -157,7 +157,7 @@ class Settings(BaseSettings):
         return self
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """
     Returns the Settings object. The lru_cache decorator ensures this function is only called once.

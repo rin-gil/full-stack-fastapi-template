@@ -64,7 +64,7 @@ class DatabaseManager:
         await self._async_engine.dispose()
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_db_manager() -> DatabaseManager:
     """
     Gets the DatabaseManager object. The lru_cache decorator ensures this function is only called once.
