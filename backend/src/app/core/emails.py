@@ -18,7 +18,10 @@ from app.core.config import Settings, get_settings
 from app.core.log_setup import get_logger
 from app.core.security import SecurityManager, get_security_manager
 
-__all__: tuple[str, ...] = ("EmailManager", "get_email_manager",)
+__all__: tuple[str, ...] = (
+    "EmailManager",
+    "get_email_manager",
+)
 
 
 logger: Logger = get_logger()
@@ -65,7 +68,7 @@ class EmailManager:
                 VALIDATE_CERTS=True,
             )
         self._jinja_env: Environment = Environment(
-            loader=FileSystemLoader(searchpath=Path(self._settings.BASE_DIR, "../email-templates", "build")),
+            loader=FileSystemLoader(searchpath=self._settings.BASE_DIR / "app" / "email-templates" / "build"),
             autoescape=select_autoescape(enabled_extensions=["html", "xml"]),
             enable_async=True,
         )

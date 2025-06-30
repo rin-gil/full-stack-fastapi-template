@@ -230,7 +230,7 @@ async def test_recover_password_html_content() -> None:
     email_manager_mock.generate_password_reset_token.return_value = token
     html_content: str = "<html>Reset Password Link</html>"
     settings_mock: MagicMock = MagicMock(
-        spec=Settings, PROJECT_NAME="TestProject", FRONTEND_URL="http://frontend", EMAIL_RESET_TOKEN_EXPIRE_HOURS=24
+        spec=Settings, PROJECT_NAME="TestProject", FRONTEND_HOST="http://frontend", EMAIL_RESET_TOKEN_EXPIRE_HOURS=24
     )
     email_manager_mock._settings = settings_mock
     email_manager_mock._render_template.return_value = html_content
@@ -248,7 +248,7 @@ async def test_recover_password_html_content() -> None:
             "username": email,
             "email": email,
             "valid_hours": settings_mock.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-            "link": f"{settings_mock.FRONTEND_URL}/reset-password?token={token}",
+            "link": f"{settings_mock.FRONTEND_HOST}/reset-password?token={token}",
         },
     )
     assert result.body.decode() == html_content

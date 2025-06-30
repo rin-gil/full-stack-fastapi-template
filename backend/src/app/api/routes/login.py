@@ -159,7 +159,7 @@ class LoginRouter:
                 "username": email,
                 "email": email,
                 "valid_hours": email_manager._settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-                "link": f"{email_manager._settings.FRONTEND_URL}/reset-password?token={token}",
+                "link": f"{email_manager._settings.FRONTEND_HOST}/reset-password?token={token}",
             },
         )
         return HTMLResponse(
