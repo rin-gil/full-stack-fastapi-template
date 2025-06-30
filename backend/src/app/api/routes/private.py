@@ -10,7 +10,7 @@ from app.core.config import get_settings, Settings
 from app.core.emails import EmailManager, get_email_manager
 from app.models import UserCreate, UserPublic, User
 
-__all__: tuple[str, ...] = ("private_router",)
+__all__: tuple[str] = ("private_router",)
 
 
 EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
