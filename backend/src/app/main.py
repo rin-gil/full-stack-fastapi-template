@@ -1,63 +1,98 @@
+"""Main application module."""
+
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+
+# noinspection PyProtectedMember
+from loguru._logger import Logger
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.main import api_router
-from app.core.config import get_settings, Settings
+from app.api.main import MainRouter
+from app.core.config import Settings, get_settings
+from app.core.db import DatabaseManager, get_db_manager
+from app.core.log_setup import get_logger
+
+__all__: tuple = ()
+
+logger: Logger = get_logger()
 
 
-from app.core.log_setup import get_logger # <-- Импортируем
+class AppFactory:
+    """A factory class to create and configure the FastAPI application."""
 
-# ВЫЗЫВАЕМ ЭТО ОДИН РАЗ ЗДЕСЬ.
-# Этот вызов выполнит настройку в LoggingManager
-# до того, как uvicorn начнет использовать InterceptHandler.
-logger = get_logger()
+    def __init__(self) -> None:
+        """Initializes the AppFactory."""
+        self._settings: Settings = get_settings()
+        self._db_manager: DatabaseManager = get_db_manager()
+        # Creating a dictionary with parameters for FastAPI
+        fastapi_params: dict[str, Any] = {
+            "title": self._settings.PROJECT_NAME,
+            "generate_unique_id_function": self._custom_generate_unique_id,
+            "lifespan": self._lifespan,
+        }
+        # If the environment is not local, disable documentation
+        if self._settings.ENVIRONMENT != "local":
+            fastapi_params["openapi_url"] = None
+            fastapi_params["docs_url"] = None
+            fastapi_params["redoc_url"] = None
+            fastapi_params["swagger_ui_oauth2_redirect_url"] = None
+        else:
+            fastapi_params["debug"] = True
+            fastapi_params["openapi_url"] = f"{self._settings.API_V1_STR}/openapi.json"
+        # Create a FastAPI instance by unpacking the parameter dictionary
+        self.app: FastAPI = FastAPI(**fastapi_params)
+        self._configure_middleware()
+        self._include_routers()
 
-settings: Settings = get_settings()
+    @staticmethod
+    def _custom_generate_unique_id(route: APIRoute) -> str:
+        """
+        Generates a custom unique ID for each route to improve client generation.
+
+        :param route: The APIRoute object.
+        :return: A string representing the unique ID.
+        """
+        return f"{route.tags[0]}-{route.name}"
+
+    @asynccontextmanager
+    async def _lifespan(self, _: FastAPI) -> AsyncGenerator[None, None]:
+        """
+        Manages the application's lifespan events for database connections.
+
+        :param _: The FastAPI application instance.
+        """
+        logger.info("Connecting to the database.")
+        await self._db_manager.connect_to_database()
+        yield
+        logger.info("Closing the database connection.")
+        await self._db_manager.close_database_connection()
+
+    def _configure_middleware(self) -> None:
+        """
+        Configures and adds CORS middleware to the application.
+
+        :return: None
+        """
+        if self._settings.all_cors_origins:
+            self.app.add_middleware(
+                middleware_class=CORSMiddleware,  # type: ignore
+                allow_origins=[str(origin) for origin in self._settings.all_cors_origins],
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
+
+    def _include_routers(self) -> None:
+        """
+        Includes the main API router into the application.
+
+        :return: None
+        """
+        main_router: MainRouter = MainRouter(settings=self._settings)
+        self.app.include_router(router=main_router.router, prefix=self._settings.API_V1_STR)
 
 
-def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
-
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    generate_unique_id_function=custom_generate_unique_id,
-)
-
-# Set all CORS enabled origins
-if settings.all_cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.all_cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-# # src/main.py
-# from fastapi import FastAPI
-# from contextlib import asynccontextmanager
-#
-# from app.core.config import get_settings
-# from app.core.db import get_db_manager
-# from app.core.logging import setup_app_logging # <-- импортируем
-#
-# # Вызываем настройку логирования один раз при старте
-# # до создания FastAPI приложения.
-# setup_app_logging(settings=get_settings())
-#
-# db_manager = get_db_manager()
-#
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     await db_manager.connect_to_database()
-#     yield
-#     await db_manager.close_database_connection()
-#
-# app = FastAPI(lifespan=lifespan)
-#
-# # ... остальной код
+app: FastAPI = AppFactory().app
