@@ -1,54 +1,67 @@
-# app/api/routes/private.py
+"""Module for private endpoints."""
 
-from typing import Any, Annotated
+from typing import Annotated, Type
 
-# ИЗМЕНЕНИЕ 1: Добавляем BackgroundTasks, Depends и другие импорты
-from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi_utils.cbv import cbv
 
-# ИЗМЕНЕНИЕ 2: Импортируем наши новые зависимости и менеджеры
 from app.api.deps import UserCRUDDep
 from app.core.config import get_settings, Settings
 from app.core.emails import EmailManager, get_email_manager
-from app.models import UserCreate, UserPublic
+from app.models import UserCreate, UserPublic, User
 
-# Определяем новую зависимость для EmailManager
-EmailManagerDep = Annotated[EmailManager, Depends(get_email_manager)]
-SettingsDep = Annotated[Settings, Depends(get_settings)]
-
-router = APIRouter(tags=["private"], prefix="/private")
+__all__: tuple[str, ...] = ("private_router",)
 
 
-@router.post("/users/", response_model=UserPublic)
-async def create_user(
-    *,
-    user_in: UserCreate,
-    user_crud: UserCRUDDep,
-    email_manager: EmailManagerDep,  # ИЗМЕНЕНИЕ 3: Добавляем зависимость EmailManager
-    background_tasks: BackgroundTasks, # ИЗМЕНЕНИЕ 4: Добавляем зависимость для фоновых задач
-    settings: SettingsDep # ИЗМЕНЕНИЕ 5: Добавляем настройки для проверки emails_enabled
-) -> Any:
-    """
-    Create new user and send new account email.
-    """
-    existing_user = await user_crud.get_by_email(email=user_in.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The user with this email already exists in the system.",
-        )
+EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
+SettingsDep: Type[Settings] = Annotated[Settings, Depends(get_settings)]
 
-    # Создаем пользователя. Вся логика инкапсулирована в CRUD-методе.
-    user = await user_crud.create(user_create=user_in)
+private_router: APIRouter = APIRouter(tags=["private"], prefix="/private")
 
-    # ИЗМЕНЕНИЕ 6: Добавляем отправку email в фоновой задаче
-    if settings.emails_enabled:
-        background_tasks.add_task(
-            email_manager.send_new_account_email,
-            email_to=user_in.email,
-            username=user_in.email,
-            # Важно: мы берем пароль из входящих данных user_in,
-            # так как после создания в объекте user его уже нет в открытом виде.
-            password=user_in.password
-        )
 
-    return user
+@cbv(router=private_router)
+class PrivateRouter:
+    """Router for private endpoints."""
+
+    def __init__(self, user_crud: UserCRUDDep, email_manager: EmailManagerDep, settings: SettingsDep) -> None:
+        """
+        Initializes the PrivateRouter class with the necessary dependencies.
+
+        :param user_crud: Dependency for user CRUD operations.
+        :param email_manager: Dependency for email management operations.
+        :param settings: Dependency for application settings.
+        """
+        self._user_crud: UserCRUDDep = user_crud
+        self._email_manager: EmailManagerDep = email_manager
+        self._settings: SettingsDep = settings
+
+    @private_router.post(
+        path="/users/",
+        response_model=UserPublic,
+        summary="Create User",
+        status_code=status.HTTP_201_CREATED,
+        description="Create new user and send new account email.",
+    )
+    async def create_user(self, user_in: UserCreate, background_tasks: BackgroundTasks) -> User:
+        """
+        Create new user and send new account email.
+
+        :param user_in: The data for the user to be created.
+        :param background_tasks: The background tasks service.
+        :return: The newly created user.
+        :raises HTTPException: If the user with the given email address already exists in the system.
+        """
+        existing_user: User | None = await self._user_crud.get_by_email(email=user_in.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="The user with this email already exists in the system."
+            )
+        user: User = await self._user_crud.create(user_create=user_in)
+        if self._settings.emails_enabled:
+            background_tasks.add_task(
+                func=self._email_manager.send_new_account_email,
+                email_to=user_in.email,
+                username=user_in.email,
+                password=user_in.password,
+            )
+        return user
