@@ -1,5 +1,8 @@
 """Unit tests for backend/src/app/main.py"""
 
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
+
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, call
 

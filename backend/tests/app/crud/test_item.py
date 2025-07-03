@@ -1,4 +1,7 @@
+# type: ignore
 """Unit tests for backend/src/app/crud/item.py"""
+
+# pylint: disable=redefined-outer-name
 
 from unittest.mock import ANY, AsyncMock, MagicMock
 from uuid import UUID, uuid4

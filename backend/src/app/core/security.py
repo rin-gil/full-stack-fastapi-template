@@ -23,7 +23,7 @@ class SecurityManager:
         """
         self._settings: Settings = settings
         self._pwd_context: CryptContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        self.ALGORITHM: str = "HS256"
+        self.ALGORITHM: str = "HS256"  # pylint: disable=invalid-name
 
     def create_access_token(self, subject: str | Any, expires_delta: timedelta) -> str:
         """

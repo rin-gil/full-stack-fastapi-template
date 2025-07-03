@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from urllib.parse import quote_plus
 from warnings import warn
 
-from pydantic import AnyUrl, BeforeValidator, EmailStr, computed_field, model_validator
+from pydantic import AnyUrl, BeforeValidator, EmailStr, computed_field, model_validator, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def all_cors_origins(self) -> list[str]:
         """
@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def sqlalchemy_database_uri(self) -> str:
         """
@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_HOST: str | None = None
     SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
+    SMTP_PASSWORD: SecretStr | None = None
     EMAILS_FROM_EMAIL: EmailStr | None = None
     EMAILS_FROM_NAME: EmailStr | None = None
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
@@ -114,10 +114,10 @@ class Settings(BaseSettings):
         :return: The instance of the model.
         """
         if not self.EMAILS_FROM_NAME:
-            self.EMAILS_FROM_NAME = self.PROJECT_NAME
+            self.EMAILS_FROM_NAME = self.PROJECT_NAME  # pylint: disable=invalid-name
         return self
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def emails_enabled(self) -> bool:
         """
@@ -164,4 +164,4 @@ def get_settings() -> Settings:
 
     :return: Settings object.
     """
-    return Settings()
+    return Settings()  # type: ignore[call-arg]

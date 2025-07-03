@@ -1,5 +1,7 @@
 """Unit tests for backend/src/app/crud/base.py"""
 
+# pylint: disable=protected-access
+
 import pytest
 from sqlmodel.ext.asyncio.session import AsyncSession
 

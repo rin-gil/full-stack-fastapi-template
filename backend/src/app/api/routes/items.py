@@ -1,18 +1,18 @@
 """Module for items endpoints."""
 
-from typing import Annotated, Any, Type
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Path, status
 from fastapi_utils.cbv import cbv
 
-from app.api.deps import CurrentUser, ItemCRUDDep, OptionalCurrentUser
+from app.api.deps import CurrentUser, ItemCrudDep, OptionalCurrentUser
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
 
 __all__: tuple[str] = ("items_router",)
 
 
-ItemIDDep: Type[UUID] = Annotated[UUID, Path(alias="id", description="ID элемента")]
+ItemIdDep = Annotated[UUID, Path(alias="id", description="Item ID")]
 
 items_router: APIRouter = APIRouter()
 
@@ -21,14 +21,14 @@ items_router: APIRouter = APIRouter()
 class ItemsRouter:
     """Class-based view for item endpoints."""
 
-    def __init__(self, item_crud: ItemCRUDDep, current_user: OptionalCurrentUser) -> None:
+    def __init__(self, item_crud: ItemCrudDep, current_user: OptionalCurrentUser) -> None:
         """
         Initializes the ItemsRouter class with the necessary dependencies.
 
         :param item_crud: Dependency for item CRUD operations.
         :param current_user: Dependency for the current authorized user.
         """
-        self._item_crud: ItemCRUDDep = item_crud
+        self._item_crud: ItemCrudDep = item_crud
         self._current_user: CurrentUser = current_user
 
     async def _get_and_validate_item(self, item_id: UUID) -> Item:
@@ -95,7 +95,7 @@ class ItemsRouter:
     @items_router.get(
         path="/{id}", response_model=ItemPublic, summary="Read Item by ID", description="Getting an item by ID."
     )
-    async def read_item(self, item_id: ItemIDDep) -> Any:
+    async def read_item(self, item_id: ItemIdDep) -> Any:
         """
         Endpoint for retrieving an item by its ID.
 
@@ -105,7 +105,7 @@ class ItemsRouter:
         return await self._get_and_validate_item(item_id=item_id)
 
     @items_router.put(path="/{id}", response_model=ItemPublic, summary="Update Item", description="Item update.")
-    async def update_item(self, *, item_id: ItemIDDep, item_in: ItemUpdate) -> Item:
+    async def update_item(self, *, item_id: ItemIdDep, item_in: ItemUpdate) -> Item:
         """
         Endpoint for updating an existing item.
 
@@ -117,7 +117,7 @@ class ItemsRouter:
         return await self._item_crud.update(db_item=db_item, item_in=item_in)
 
     @items_router.delete(path="/{id}", response_model=Message, summary="Delete Item", description="Deleting an Item.")
-    async def delete_item(self, item_id: ItemIDDep) -> Message:
+    async def delete_item(self, item_id: ItemIdDep) -> Message:
         """
         Endpoint for deleting an item.
 

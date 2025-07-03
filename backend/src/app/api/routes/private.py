@@ -1,11 +1,11 @@
 """Module for private endpoints."""
 
-from typing import Annotated, Type
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi_utils.cbv import cbv
 
-from app.api.deps import UserCRUDDep
+from app.api.deps import UserCrudDep
 from app.core.config import get_settings, Settings
 from app.core.emails import EmailManager, get_email_manager
 from app.models import UserCreate, UserPublic, User
@@ -13,8 +13,8 @@ from app.models import UserCreate, UserPublic, User
 __all__: tuple[str] = ("private_router",)
 
 
-EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
-SettingsDep: Type[Settings] = Annotated[Settings, Depends(get_settings)]
+EmailManagerDep = Annotated[EmailManager, Depends(get_email_manager)]
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 private_router: APIRouter = APIRouter()
 
@@ -23,7 +23,7 @@ private_router: APIRouter = APIRouter()
 class PrivateRouter:
     """Class-based view for private endpoints."""
 
-    def __init__(self, user_crud: UserCRUDDep, email_manager: EmailManagerDep, settings: SettingsDep) -> None:
+    def __init__(self, user_crud: UserCrudDep, email_manager: EmailManagerDep, settings: SettingsDep) -> None:
         """
         Initializes the PrivateRouter class with the necessary dependencies.
 
@@ -31,7 +31,7 @@ class PrivateRouter:
         :param email_manager: Dependency for email management operations.
         :param settings: Dependency for application settings.
         """
-        self._user_crud: UserCRUDDep = user_crud
+        self._user_crud: UserCrudDep = user_crud
         self._email_manager: EmailManagerDep = email_manager
         self._settings: SettingsDep = settings
 

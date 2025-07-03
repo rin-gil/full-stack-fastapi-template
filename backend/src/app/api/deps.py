@@ -1,6 +1,6 @@
 """Module for dependency injection."""
 
-from typing import Annotated, Type
+from typing import Annotated
 from uuid import UUID
 
 import jwt
@@ -17,7 +17,7 @@ from app.crud.item import ItemCRUD
 from app.crud.user import UserCRUD
 from app.models import User
 
-__all__: tuple[str, ...] = ("CurrentUser", "CurrentSuperuser", "ItemCRUDDep", "OptionalCurrentUser", "UserCRUDDep")
+__all__: tuple[str, ...] = ("CurrentUser", "CurrentSuperuser", "ItemCrudDep", "OptionalCurrentUser", "UserCrudDep")
 
 # Basic settings
 settings: Settings = get_settings()
@@ -31,11 +31,11 @@ reusable_oauth2_strict: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl=tok
 reusable_oauth2_optional: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl=token_url, auto_error=False)
 
 # Basic dependencies
-SessionDep: Type[AsyncSession] = Annotated[AsyncSession, Depends(db_manager.get_session)]
-SecurityManagerDep: Type[SecurityManager] = Annotated[SecurityManager, Depends(get_security_manager)]
+SessionDep = Annotated[AsyncSession, Depends(db_manager.get_session)]
+SecurityManagerDep = Annotated[SecurityManager, Depends(get_security_manager)]
 # Creating two versions of token dependency
-StrictTokenDep: Type[str] = Annotated[str, Depends(reusable_oauth2_strict)]
-OptionalTokenDep: Type[str | None] = Annotated[str | None, Depends(reusable_oauth2_optional)]
+StrictTokenDep = Annotated[str, Depends(reusable_oauth2_strict)]
+OptionalTokenDep = Annotated[str | None, Depends(reusable_oauth2_optional)]
 
 
 # Class dependencies for CRUD
@@ -64,8 +64,8 @@ class ItemCRUDProvider:
         return ItemCRUD(session=session)
 
 
-UserCRUDDep: Type[UserCRUD] = Annotated[UserCRUD, Depends(UserCRUDProvider())]
-ItemCRUDDep: Type[ItemCRUD] = Annotated[ItemCRUD, Depends(ItemCRUDProvider())]
+UserCrudDep = Annotated[UserCRUD, Depends(UserCRUDProvider())]
+ItemCrudDep = Annotated[ItemCRUD, Depends(ItemCRUDProvider())]
 
 
 # Class dependencies for authentication
@@ -73,7 +73,7 @@ class CurrentUserProvider:
     """Class dependency for obtaining the current user (strict)."""
 
     async def __call__(
-        self, token: StrictTokenDep, user_crud: UserCRUDDep, security_manager: SecurityManagerDep
+        self, token: StrictTokenDep, user_crud: UserCrudDep, security_manager: SecurityManagerDep
     ) -> User:
         """
         Retrieve the current user based on the provided JWT token.
@@ -101,7 +101,7 @@ class OptionalCurrentUserProvider:
     """Class dependency for optionally obtaining the current user."""
 
     async def __call__(
-        self, token: OptionalTokenDep, user_crud: UserCRUDDep, security_manager: SecurityManagerDep
+        self, token: OptionalTokenDep, user_crud: UserCrudDep, security_manager: SecurityManagerDep
     ) -> User | None:
         """
         Retrieve the current user based on the provided JWT token.
@@ -142,6 +142,6 @@ class ActiveSuperuserProvider:
 
 
 # Final pseudonyms
-CurrentUser: Type[User] = Annotated[User, Depends(CurrentUserProvider())]
-CurrentSuperuser: Type[User] = Annotated[User, Depends(ActiveSuperuserProvider())]
-OptionalCurrentUser: Type[User | None] = Annotated[User | None, Depends(OptionalCurrentUserProvider())]
+CurrentUser = Annotated[User, Depends(CurrentUserProvider())]
+CurrentSuperuser = Annotated[User, Depends(ActiveSuperuserProvider())]
+OptionalCurrentUser = Annotated[User | None, Depends(OptionalCurrentUserProvider())]

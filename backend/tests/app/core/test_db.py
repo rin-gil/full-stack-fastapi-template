@@ -1,4 +1,8 @@
+# type: ignore
 """Unit tests for backend/src/app/core/db.py"""
+
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
 
 from typing import Any
 from unittest.mock import AsyncMock
@@ -135,7 +139,7 @@ async def test_database_manager_get_session(
         assert isinstance(session, AsyncSession)
     mock_async_session_factory.return_value.__aenter__.assert_called_once()
     mock_async_session_factory.return_value.__aexit__.assert_called_once()
-    session.close.assert_called_once()
+    session.close.assert_called_once()  # pylint: disable=undefined-loop-variable
 
 
 @pytest.mark.asyncio

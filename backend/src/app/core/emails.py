@@ -3,11 +3,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
 import jwt
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
 from jwt.exceptions import InvalidTokenError
 
@@ -18,10 +17,7 @@ from app.core.config import Settings, get_settings
 from app.core.log_setup import get_logger
 from app.core.security import SecurityManager, get_security_manager
 
-__all__: tuple[str, ...] = (
-    "EmailManager",
-    "get_email_manager",
-)
+__all__: tuple[str, ...] = ("EmailManager", "get_email_manager")
 
 
 logger: Logger = get_logger()
@@ -97,7 +93,7 @@ class EmailManager:
             logger.warning("Email sending is disabled or not configured. The letter has not been sent.")
             return None
         message: MessageSchema = MessageSchema(
-            subject=subject, recipients=[email_to], body=html_content, subtype="html"
+            subject=subject, recipients=[email_to], body=html_content, subtype=MessageType.html
         )
         fm: FastMail = FastMail(config=self._mailer_config)
         try:
@@ -168,7 +164,7 @@ class EmailManager:
                 "username": email_to,
                 "email": email_to,
                 "valid_hours": self._settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-                "link": f"{self._settings.FRONTEND_URL}/reset-password?token={token}",
+                "link": f"{self._settings.FRONTEND_HOST}/reset-password?token={token}",
             },
         )
         await self._send_email(email_to=email_to, subject=subject, html_content=html_content)
@@ -190,7 +186,7 @@ class EmailManager:
                 "username": username,
                 "password": password,
                 "email": email_to,
-                "link": self._settings.FRONTEND_URL,
+                "link": self._settings.FRONTEND_HOST,
             },
         )
         await self._send_email(email_to=email_to, subject=subject, html_content=html_content)

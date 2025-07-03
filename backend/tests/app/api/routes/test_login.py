@@ -1,5 +1,7 @@
 """Unit tests for backend/src/app/api/routes/login.py"""
 
+# pylint: disable=protected-access
+
 import asyncio
 from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock
@@ -10,7 +12,7 @@ from fastapi import BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse
 from pytest_mock import MockerFixture
 
-from app.api.deps import UserCRUDDep
+from app.api.deps import UserCrudDep
 
 # noinspection PyProtectedMember
 from app.api.routes.login import LoginRouter
@@ -51,7 +53,7 @@ async def test_login_access_token(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     security_manager_mock: AsyncMock = AsyncMock(spec=SecurityManager)
     settings_mock: MagicMock = MagicMock(spec=Settings, ACCESS_TOKEN_EXPIRE_MINUTES=60)
     form_data_mock: MagicMock = MagicMock(username="user@example.com", password="password123")
@@ -121,7 +123,7 @@ async def test_recover_password(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     email_manager_mock: AsyncMock = AsyncMock(spec=EmailManager)
     background_tasks_mock: MagicMock = MagicMock(spec=BackgroundTasks)
     email: str = "user@example.com"
@@ -184,7 +186,7 @@ async def test_reset_password(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     email_manager_mock: AsyncMock = AsyncMock(spec=EmailManager)
     email: str = "user@example.com"
     token: str = "valid_token"
@@ -251,5 +253,5 @@ async def test_recover_password_html_content() -> None:
             "link": f"{settings_mock.FRONTEND_HOST}/reset-password?token={token}",
         },
     )
-    assert result.body.decode() == html_content
+    assert result.body.decode() == html_content  # type: ignore
     assert result.headers["subject"] == f"{settings_mock.PROJECT_NAME} - Password recovery for user {email}"

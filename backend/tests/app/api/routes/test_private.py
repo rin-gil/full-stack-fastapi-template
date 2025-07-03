@@ -1,4 +1,8 @@
+# type: ignore
 """Unit tests for backend/src/app/api/routes/private.py"""
+
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
 
 from unittest.mock import AsyncMock, MagicMock
 

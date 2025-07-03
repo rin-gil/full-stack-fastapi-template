@@ -1,4 +1,8 @@
+# type: ignore
 """Unit tests for backend/src/app/core/config.py"""
+
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
 
 from pathlib import Path
 from typing import Any

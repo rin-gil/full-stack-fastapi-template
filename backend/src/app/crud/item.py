@@ -49,7 +49,9 @@ class ItemCRUD(BaseCRUD):
         :param limit: The maximum number of items to return.
         :return: An ItemsPublic object containing a list of items and the total count of items.
         """
-        count_statement: SelectOfScalar = select(func.count()).select_from(Item.__table__)
+        count_statement: SelectOfScalar = (  # type: ignore[arg-type]
+            select(func.count()).select_from(Item)  # pylint: disable=not-callable
+        )
         count: int = (await self._session.exec(statement=count_statement)).one()
         statement: SelectOfScalar = select(Item).offset(skip).limit(limit)
         items: Sequence[Row | RowMapping] = (await self._session.exec(statement=statement)).all()
@@ -65,10 +67,14 @@ class ItemCRUD(BaseCRUD):
         :return: An ItemsPublic object containing a list of items and the total count of items.
         """
         count_statement: SelectOfScalar = (
-            select(func.count()).select_from(Item.__table__).where(Item.owner_id == owner_id)
+            select(func.count())  # pylint: disable=not-callable
+            .select_from(Item)
+            .where(Item.owner_id == owner_id)  # type: ignore[arg-type]
         )
         count: int = (await self._session.exec(statement=count_statement)).one()
-        statement: SelectOfScalar = select(Item).where(Item.owner_id == owner_id).offset(skip).limit(limit)
+        statement: SelectOfScalar = (  # type: ignore
+            select(Item).where(Item.owner_id == owner_id).offset(skip).limit(limit)
+        )
         items: Sequence[Row | RowMapping] = (await self._session.exec(statement=statement)).all()
         return ItemsPublic(data=items, count=count)
 
@@ -107,6 +113,6 @@ class ItemCRUD(BaseCRUD):
         :param owner_id: UUID of the owner whose items will be deleted.
         :return: None
         """
-        statement: Delete = delete(Item).where(Item.owner_id == owner_id)
+        statement: Delete = delete(Item).where(Item.owner_id == owner_id)  # type: ignore[arg-type]
         await self._session.exec(statement=statement)  # type: ignore
         await self._session.commit()

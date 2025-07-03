@@ -25,7 +25,7 @@ class LoggingManager:
         :param settings: Settings instance.
         """
         self._settings: Settings = settings
-        self.logger: Logger = logger
+        self.logger: Logger = logger  # type: ignore[assignment]
         self.logger.remove()
         debug: bool = self._settings.ENVIRONMENT == "local"
         # Forming the log format
@@ -82,4 +82,4 @@ def get_logger() -> Logger:
     :return: An instance of Logger.
     """
     LoggingManager(settings=get_settings())
-    return logger
+    return logger  # type: ignore[return-value]

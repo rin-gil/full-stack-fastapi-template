@@ -72,8 +72,8 @@ class UserCRUD(BaseCRUD):
         :param email: User's email address
         :return: User object or None if not found
         """
-        statement: SelectOfScalar = select(User).where(User.email == email)
-        return (await self._session.exec(statement=statement)).first()
+        statement: SelectOfScalar = select(User).where(User.email == email)  # type: ignore[arg-type]
+        return (await self._session.exec(statement=statement)).first()  # type: ignore[no-any-return]
 
     async def authenticate(self, *, email: str, password: str) -> User | None:
         """
@@ -98,7 +98,9 @@ class UserCRUD(BaseCRUD):
         :param limit: The maximum number of users to return.
         :return: A UsersPublic object containing a list of users and the total count of users.
         """
-        count_statement: SelectOfScalar = select(func.count()).select_from(User.__table__)
+        count_statement: SelectOfScalar = (  # type: ignore[arg-type]
+            select(func.count()).select_from(User)  # pylint: disable=not-callable
+        )
         count: int = (await self._session.exec(statement=count_statement)).one()
         statement: SelectOfScalar = select(User).offset(skip).limit(limit)
         users: Sequence = (await self._session.exec(statement=statement)).all()

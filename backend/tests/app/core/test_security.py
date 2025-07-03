@@ -1,5 +1,8 @@
 """Unit tests for backend/src/app/core/security.py"""
 
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
+
 from datetime import datetime, timedelta
 from typing import Any
 from unittest.mock import MagicMock

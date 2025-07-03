@@ -1,14 +1,14 @@
 """Module for login and authentication endpoints."""
 
 from datetime import timedelta
-from typing import Annotated, Any, Type
+from typing import Annotated, Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_utils.cbv import cbv
 
-from app.api.deps import CurrentUser, CurrentSuperuser, UserCRUDDep
+from app.api.deps import CurrentUser, CurrentSuperuser, UserCrudDep
 from app.core.config import get_settings, Settings
 from app.core.emails import EmailManager, get_email_manager
 from app.core.security import get_security_manager, SecurityManager
@@ -17,10 +17,10 @@ from app.models import Message, NewPassword, Token, UserPublic, UserUpdate, User
 __all__: tuple[str] = ("login_router",)
 
 
-SettingsDep: Type[Settings] = Annotated[Settings, Depends(get_settings)]
-EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
-SecurityManagerDep: Type[SecurityManager] = Annotated[SecurityManager, Depends(get_security_manager)]
-OAuthFormDep: Type[OAuth2PasswordRequestForm] = Annotated[OAuth2PasswordRequestForm, Depends()]
+SettingsDep = Annotated[Settings, Depends(get_settings)]
+EmailManagerDep = Annotated[EmailManager, Depends(get_email_manager)]
+SecurityManagerDep = Annotated[SecurityManager, Depends(get_security_manager)]
+OAuthFormDep = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 login_router: APIRouter = APIRouter()
 
@@ -38,7 +38,7 @@ class LoginRouter:
     async def login_access_token(
         self,
         form_data: OAuthFormDep,
-        user_crud: UserCRUDDep,
+        user_crud: UserCrudDep,
         security_manager: SecurityManagerDep,
         settings: SettingsDep,
     ) -> Token:
@@ -84,7 +84,7 @@ class LoginRouter:
         description="Send a password recovery email.",
     )
     async def recover_password(
-        self, email: str, user_crud: UserCRUDDep, email_manager: EmailManagerDep, background_tasks: BackgroundTasks
+        self, email: str, user_crud: UserCrudDep, email_manager: EmailManagerDep, background_tasks: BackgroundTasks
     ) -> Message:
         """
         Endpoint to initiate password recovery for a user.
@@ -109,7 +109,7 @@ class LoginRouter:
         description="Reset user password using a recovery token.",
     )
     async def reset_password(
-        self, body: NewPassword, user_crud: UserCRUDDep, email_manager: EmailManagerDep
+        self, body: NewPassword, user_crud: UserCrudDep, email_manager: EmailManagerDep
     ) -> Message:
         """
         Endpoint to reset a user's password using a valid token.

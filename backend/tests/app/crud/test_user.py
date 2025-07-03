@@ -155,7 +155,7 @@ async def test_user_crud_authenticate(
     user_crud: UserCRUD = UserCRUD(session=session_mock)
     email: str = "test@example.com"
     password: str = "password123"
-    user_crud.get_by_email = AsyncMock(return_value=user_in_db)
+    user_crud.get_by_email = AsyncMock(return_value=user_in_db)  # type: ignore
     result: User | None = await user_crud.authenticate(email=email, password=password)
     user_crud.get_by_email.assert_called_once_with(email=email)
     if user_in_db:
@@ -215,7 +215,7 @@ async def test_user_crud_remove(user_in_db: User | None) -> None:
     session_mock: AsyncMock = AsyncMock(spec=AsyncSession)
     user_crud: UserCRUD = UserCRUD(session=session_mock)
     user_id: UUID = uuid4()
-    user_crud.get_by_id = AsyncMock(return_value=user_in_db)
+    user_crud.get_by_id = AsyncMock(return_value=user_in_db)  # type: ignore
     result: User | None = await user_crud.remove(user_id=user_id)
     user_crud.get_by_id.assert_called_once_with(user_id=user_id)
     if user_in_db:

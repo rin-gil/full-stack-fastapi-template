@@ -1,5 +1,7 @@
 """Unit tests for backend/src/app/api/main.py"""
 
+# pylint: disable=protected-access
+
 from unittest.mock import MagicMock
 
 from fastapi import APIRouter
@@ -48,8 +50,8 @@ def test_main_router_include_routers() -> None:
     main_router: MainRouter = MainRouter(settings=settings)
     router: APIRouter = main_router.router
     # Check the .path and .tags attributes for end routes (APIRoute).
-    all_paths: set = {route.path for route in router.routes}
-    all_tags: set = {tag for route in router.routes for tag in route.tags}
+    all_paths: set = {route.path for route in router.routes}  # type: ignore
+    all_tags: set = {tag for route in router.routes for tag in route.tags}  # type: ignore
     # Check that there are paths starting with the desired prefixes
     assert any(path.startswith("/users") for path in all_paths)
     assert any(path.startswith("/utils") for path in all_paths)
@@ -73,8 +75,8 @@ def test_main_router_include_routers_non_local() -> None:
     main_router: MainRouter = MainRouter(settings=settings)
     router: APIRouter = main_router.router
     # Check the .path and .tags attributes for end routes (APIRoute).
-    all_paths: set = {route.path for route in router.routes}
-    all_tags: set = {tag for route in router.routes for tag in route.tags}
+    all_paths: set = {route.path for route in router.routes}  # type: ignore
+    all_tags: set = {tag for route in router.routes for tag in route.tags}  # type: ignore
     # Check that the necessary routers are available
     assert any(path.startswith("/users") for path in all_paths)
     assert any(path.startswith("/utils") for path in all_paths)

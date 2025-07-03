@@ -1,12 +1,12 @@
 """Module for users endpoints."""
 
-from typing import Annotated, Any, Type
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, status
 from fastapi_utils.cbv import cbv
 
-from app.api.deps import CurrentUser, CurrentSuperuser, ItemCRUDDep, UserCRUDDep
+from app.api.deps import CurrentUser, CurrentSuperuser, ItemCrudDep, UserCrudDep
 from app.core.config import get_settings, Settings
 from app.core.emails import EmailManager, get_email_manager
 from app.core.security import get_security_manager, SecurityManager
@@ -24,10 +24,10 @@ from app.models import (
 
 __all__: tuple[str] = ("users_router",)
 
-EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
-SettingsDep: Type[Settings] = Annotated[Settings, Depends(get_settings)]
-SecurityManagerDep: Type[SecurityManager] = Annotated[SecurityManager, Depends(get_security_manager)]
-UserIDDep: Type[UUID] = Annotated[UUID, Path(alias="id", description="User ID")]
+EmailManagerDep = Annotated[EmailManager, Depends(get_email_manager)]
+SettingsDep = Annotated[Settings, Depends(get_settings)]
+SecurityManagerDep = Annotated[SecurityManager, Depends(get_security_manager)]
+UserIdDep = Annotated[UUID, Path(alias="id", description="User ID")]
 
 users_router: APIRouter = APIRouter()
 
@@ -36,13 +36,13 @@ users_router: APIRouter = APIRouter()
 class UsersRouter:
     """Class-based view for user endpoints."""
 
-    def __init__(self, user_crud: UserCRUDDep) -> None:
+    def __init__(self, user_crud: UserCrudDep) -> None:
         """
         Initializes the UsersRouter class with the necessary dependencies.
 
         :param user_crud: Dependency for user CRUD operations.
         """
-        self._user_crud: UserCRUDDep = user_crud
+        self._user_crud: UserCrudDep = user_crud
 
     @users_router.get(
         path="/",
@@ -209,7 +209,7 @@ class UsersRouter:
     @users_router.get(
         path="/{id}", response_model=UserPublic, summary="Read User by ID", description="Retrieving user data by ID."
     )
-    async def read_user_by_id(self, user_id: UserIDDep, current_user: CurrentUser) -> User:
+    async def read_user_by_id(self, user_id: UserIdDep, current_user: CurrentUser) -> User:
         """
         Endpoint to retrieve a user's data by their ID.
 
@@ -233,7 +233,7 @@ class UsersRouter:
         summary="Update User by ID",
         description="Update user by ID (for superusers only).",
     )
-    async def update_user(self, user_id: UserIDDep, user_in: UserUpdate, _: CurrentSuperuser) -> User:
+    async def update_user(self, user_id: UserIdDep, user_in: UserUpdate, _: CurrentSuperuser) -> User:
         """
         Endpoint to update a user by their ID. Requires superuser privileges.
 
@@ -262,7 +262,7 @@ class UsersRouter:
         description="Delete a user by their ID (superusers only).",
     )
     async def delete_user(
-        self, user_id: UserIDDep, item_crud: ItemCRUDDep, current_superuser: CurrentSuperuser
+        self, user_id: UserIdDep, item_crud: ItemCrudDep, current_superuser: CurrentSuperuser
     ) -> Message:
         """
         Endpoint to delete a user by their ID. Requires superuser privileges.

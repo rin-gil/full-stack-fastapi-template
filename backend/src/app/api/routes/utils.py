@@ -1,6 +1,6 @@
 """Module for utility endpoints."""
 
-from typing import Annotated, Type
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi_utils.cbv import cbv
@@ -13,7 +13,7 @@ from app.models import Message
 __all__: tuple[str] = ("utils_router",)
 
 
-EmailManagerDep: Type[EmailManager] = Annotated[EmailManager, Depends(get_email_manager)]
+EmailManagerDep = Annotated[EmailManager, Depends(get_email_manager)]
 
 utils_router: APIRouter = APIRouter()
 

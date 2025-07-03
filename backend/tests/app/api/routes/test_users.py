@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi import BackgroundTasks, HTTPException
 
-from app.api.deps import ItemCRUDDep, UserCRUDDep
+from app.api.deps import ItemCrudDep, UserCrudDep
 # noinspection PyProtectedMember
 from app.api.routes.users import UsersRouter
 from app.core.config import Settings
@@ -58,7 +58,7 @@ async def test_read_users(
         assert exc_info.value.status_code == 403
         assert exc_info.value.detail == "The user doesn't have enough privileges"
         return None
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     future: asyncio.Future = asyncio.Future()
     future.set_result(UsersPublic(data=expected_data, count=expected_count))
     user_crud_mock.get_multi.return_value = future
@@ -113,7 +113,7 @@ async def test_create_user(
         assert exc_info.value.status_code == expected_status
         assert exc_info.value.detail == expected_detail
         return None
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     superuser_mock: User = MagicMock(spec=User, is_superuser=is_superuser)
     future_get: asyncio.Future = asyncio.Future()
     future_get.set_result(existing_user)
@@ -167,7 +167,7 @@ async def test_read_user_me() -> None:
 
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     current_user: UserPublic = UserPublic(
         id=uuid4(), email="user@example.com", is_active=True, is_superuser=False, full_name=None
     )
@@ -199,7 +199,7 @@ async def test_update_user_me(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     current_user: UserPublic = UserPublic(
         id=uuid4(), email="user@example.com", is_active=True, is_superuser=False, full_name=None
     )
@@ -254,7 +254,7 @@ async def test_update_password_me(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     security_manager_mock: AsyncMock = AsyncMock(spec=SecurityManager)
     current_user: User = MagicMock(
         spec=User,
@@ -311,7 +311,7 @@ async def test_delete_user_me(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     current_user: UserPublic = UserPublic(
         id=uuid4(), email="user@example.com", is_active=True, is_superuser=is_superuser, full_name=None
     )
@@ -356,7 +356,7 @@ async def test_register_user(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     user_in: UserRegister = UserRegister(email="newuser@example.com", password="password123", full_name="New User")
     user_create: UserCreate = UserCreate.model_validate(obj=user_in)
     new_user: UserPublic = UserPublic(
@@ -387,7 +387,7 @@ async def test_register_user(
     "current_user_id,requested_user_id,is_superuser,exists,raises_exception,expected_status,expected_detail",
     [
         (uuid4(), uuid4(), True, True, False, None, None),
-        (user_id := uuid4(), user_id, False, True, False, None, None),
+        (user_id := uuid4(), user_id, False, True, False, None, None),  # pylint: disable=undefined-variable,unused-variable
         (uuid4(), uuid4(), False, True, True, 403, "The user doesn't have enough privileges"),
         (uuid4(), uuid4(), True, False, True, 404, "User not found"),
     ],
@@ -414,7 +414,7 @@ async def test_read_user_by_id(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     current_user: UserPublic = UserPublic(
         id=current_user_id, email="user@example.com", is_active=True, is_superuser=is_superuser, full_name=None
     )
@@ -474,7 +474,7 @@ async def test_update_user(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     user_id: UUID = uuid4()
     user_in: UserUpdate = UserUpdate(email="newemail@example.com", full_name="New Name")
     db_user: UserPublic = UserPublic(
@@ -539,8 +539,8 @@ async def test_delete_user(
     :param expected_detail: Expected exception detail if exception is raised.
     :return: None
     """
-    user_crud_mock: AsyncMock = AsyncMock(spec=UserCRUDDep)
-    item_crud_mock: AsyncMock = AsyncMock(spec=ItemCRUDDep)
+    user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
+    item_crud_mock: AsyncMock = AsyncMock(spec=ItemCrudDep)
     user_id: UUID = uuid4()
     current_user_id: UUID = user_id if is_same_user else uuid4()
     user_to_delete: UserPublic = UserPublic(

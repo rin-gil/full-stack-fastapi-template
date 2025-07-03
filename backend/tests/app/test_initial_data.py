@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for backend/src/app/initial_data.py"""
 
 # pylint: disable=redefined-outer-name

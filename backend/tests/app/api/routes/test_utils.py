@@ -1,5 +1,7 @@
 """Unit tests for backend/src/app/api/routes/utils.py"""
 
+# pylint: disable=redefined-outer-name
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -76,7 +78,7 @@ async def test_test_email(
     :return: None
     """
     background_tasks: BackgroundTasks = BackgroundTasks()
-    background_tasks.add_task = MagicMock()
+    background_tasks.add_task = MagicMock()  # type: ignore
     result: Message = await utils_router.test_email(
         email_to=email_to,
         background_tasks=background_tasks,

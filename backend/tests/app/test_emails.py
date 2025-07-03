@@ -1,4 +1,8 @@
+# type: ignore
 """Unit tests for backend/src/app/emails.py"""
+
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -39,7 +43,7 @@ def mock_settings(mocker: MockerFixture) -> Settings:
     settings.PROJECT_NAME = "Test Project"
     settings.SECRET_KEY = "secret_key"
     settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS = 24
-    settings.FRONTEND_URL = "http://frontend.com"
+    settings.FRONTEND_HOST = "http://frontend.com"
     settings.BASE_DIR = Path("/app")
     return settings
 
@@ -320,7 +324,7 @@ async def test_send_reset_password_email(
             "username": email_to,
             "email": email_to,
             "valid_hours": mock_settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-            "link": f"{mock_settings.FRONTEND_URL}/reset-password?token=mocked_token",
+            "link": f"{mock_settings.FRONTEND_HOST}/reset-password?token=mocked_token",
         }
     )
     mock_send_email.assert_called_once_with(
@@ -358,7 +362,7 @@ async def test_send_new_account_email(
             "username": username,
             "password": password,
             "email": email_to,
-            "link": mock_settings.FRONTEND_URL,
+            "link": mock_settings.FRONTEND_HOST,
         }
     )
     mock_send_email.assert_called_once_with(

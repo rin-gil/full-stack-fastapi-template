@@ -1,4 +1,8 @@
+# type: ignore
 """Unit tests for backend/src/app/core/log_setup.py"""
+
+# pylint: disable=protected-access
+# pylint: disable=redefined-outer-name
 
 import logging
 from pathlib import Path

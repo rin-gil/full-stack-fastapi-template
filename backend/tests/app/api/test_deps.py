@@ -1,5 +1,7 @@
 """Unit tests for backend/src/app/api/deps.py"""
 
+# pylint: disable=protected-access
+
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
