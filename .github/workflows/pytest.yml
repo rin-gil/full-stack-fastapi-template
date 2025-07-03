@@ -25,6 +25,34 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           cd ../..
+
+      - name: Create .env file for testing
+        run: |
+          cat <<EOF > .env
+          DOMAIN=localhost
+          FRONTEND_HOST=http://localhost:5173
+          ENVIRONMENT=local
+          PROJECT_NAME="Full Stack FastAPI Test Project"
+          STACK_NAME=full-stack-fastapi-test-project
+          BACKEND_CORS_ORIGINS="http://localhost,http://localhost:5173,https://localhost,https://localhost:5173"
+          SECRET_KEY=test_secret_key_for_ci_do_not_use_in_prod
+          FIRST_SUPERUSER=admin@example.com
+          FIRST_SUPERUSER_PASSWORD=test_password
+          SMTP_HOST=
+          SMTP_USER=
+          SMTP_PASSWORD=
+          EMAILS_FROM_EMAIL=
+          SMTP_TLS=True
+          SMTP_SSL=False
+          SMTP_PORT=587
+          POSTGRES_SERVER=db
+          POSTGRES_PORT=5432
+          POSTGRES_SOCKET=
+          POSTGRES_DB=testdb
+          POSTGRES_USER=testuser
+          POSTGRES_PASSWORD=testpassword
+          EOF
+
       - name: Test with Pytest
         run: |
           pytest --config-file=backend/pyproject.toml backend/tests
