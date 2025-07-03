@@ -55,7 +55,5 @@ jobs:
           cd ..
 
       - name: Test with Pytest
-        env:
-          PYTHONPATH: ${{ github.workspace }}/backend/src
         run: |
           pytest --config-file=backend/pyproject.toml backend/tests
