@@ -1,29 +1,13 @@
 # Security Policy
 
-Security is very important for this project and its community. 🔒
-
-Learn more about it below. 👇
-
-## Versions
-
-The latest version or release is supported.
-
-You are encouraged to write tests for your application and update your versions frequently after ensuring that your tests are passing. This way you will benefit from the latest features, bug fixes, and **security fixes**.
-
 ## Reporting a Vulnerability
 
-If you think you found a vulnerability, and even if you are not sure about it, please report it right away by sending an email to: security@tiangolo.com. Please try to be as explicit as possible, describing all the steps and example code to reproduce the security issue.
+If you have discovered a security vulnerability in our project, please report it to us privately by emailing us at **[e.ringil@proton.me](mailto:e.ringil@proton.me)**. Please do not create a public thread on GitHub for this vulnerability.
 
-I (the author, [@tiangolo](https://twitter.com/tiangolo)) will review it thoroughly and get back to you.
+When reporting a vulnerability, please provide as much information as possible, including:
 
-## Public Discussions
+- A description of the vulnerability
+- Steps to reproduce the vulnerability
+- Possible impact of the vulnerability
 
-Please restrain from publicly discussing a potential security vulnerability. 🙊
-
-It's better to discuss privately and try to find a solution first, to limit the potential impact as much as possible.
-
----
-
-Thanks for your help!
-
-The community and I thank you for that. 🙇
+You will receive a response from us within 48 hours. If the issue is confirmed, we'll release a fix as soon as possible, depending on complexity, within a few days.
