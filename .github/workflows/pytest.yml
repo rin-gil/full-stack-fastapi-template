@@ -25,7 +25,9 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: Create .env file for testing
+      - name: Test with Pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}/backend/src
         run: |
           cat <<EOF > .env
           DOMAIN=localhost
@@ -52,9 +54,4 @@ jobs:
           POSTGRES_PASSWORD=testpassword
           EOF
           cd ../..
-
-      - name: Test with Pytest
-        env:
-          PYTHONPATH: ${{ github.workspace }}/backend/src
-        run: |
           pytest --config-file=backend/pyproject.toml backend/tests
