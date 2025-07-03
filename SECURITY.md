@@ -11,4 +11,3 @@ When reporting a vulnerability, please provide as much information as possible, 
 - Possible impact of the vulnerability
 
 You will receive a response from us within 48 hours. If the issue is confirmed, we'll release a fix as soon as possible, depending on complexity, within a few days.
-
