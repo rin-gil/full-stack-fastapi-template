@@ -4,8 +4,8 @@ from functools import lru_cache
 from typing import AsyncGenerator
 
 from sqlalchemy import text
-from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings, Settings
 
