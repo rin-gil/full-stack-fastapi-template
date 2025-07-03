@@ -24,7 +24,7 @@ jobs:
           cd backend/src
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          cd ../..
+          cd ..
 
       - name: Create .env file for testing
         run: |
@@ -52,6 +52,7 @@ jobs:
           POSTGRES_USER=testuser
           POSTGRES_PASSWORD=testpassword
           EOF
+          cd ..
 
       - name: Test with Pytest
         env:
