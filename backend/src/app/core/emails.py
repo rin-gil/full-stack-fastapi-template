@@ -93,7 +93,7 @@ class EmailManager:
             logger.warning("Email sending is disabled or not configured. The letter has not been sent.")
             return None
         message: MessageSchema = MessageSchema(
-            subject=subject, recipients=[email_to], body=html_content, subtype=MessageType.html
+            subject=subject, recipients=[email_to], body=html_content, subtype=MessageType.html  # type: ignore
         )
         fm: FastMail = FastMail(config=self._mailer_config)
         try:

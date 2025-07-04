@@ -60,8 +60,8 @@ class PrivateRouter:
         if self._settings.emails_enabled:
             background_tasks.add_task(
                 func=self._email_manager.send_new_account_email,
-                email_to=user_in.email,
-                username=user_in.email,
+                email_to=user_in.email,  # type: ignore
+                username=user_in.email,  # type: ignore
                 password=user_in.password,
             )
         return user

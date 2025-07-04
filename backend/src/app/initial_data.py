@@ -50,7 +50,7 @@ class InitialDataGenerator:
         logger.info("Creating first superuser...")
         async for session in self._db_manager.get_session():
             user_crud: UserCRUD = UserCRUD(session=session)
-            user: User | None = await user_crud.get_by_email(email=self._settings.FIRST_SUPERUSER)
+            user: User | None = await user_crud.get_by_email(email=self._settings.FIRST_SUPERUSER)  # type: ignore
             if not user:
                 user_in: UserCreate = UserCreate(
                     email=self._settings.FIRST_SUPERUSER,

@@ -42,7 +42,7 @@ class UtilsRouter:
 
         :return: A message indicating that the email has been sent.
         """
-        background_tasks.add_task(func=email_manager.send_test_email, email_to=email_to)
+        background_tasks.add_task(func=email_manager.send_test_email, email_to=email_to)  # type: ignore
         return Message(message="Test email sent")
 
     @utils_router.get(

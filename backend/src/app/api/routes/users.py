@@ -96,8 +96,8 @@ class UsersRouter:
         if settings.emails_enabled:
             background_tasks.add_task(
                 email_manager.send_new_account_email,
-                email_to=user_in.email,
-                username=user_in.email,
+                email_to=user_in.email,  # type: ignore
+                username=user_in.email,  # type: ignore
                 password=user_in.password,
             )
         return new_user

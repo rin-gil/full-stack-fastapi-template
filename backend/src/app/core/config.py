@@ -114,7 +114,7 @@ class Settings(BaseSettings):
         :return: The instance of the model.
         """
         if not self.EMAILS_FROM_NAME:
-            self.EMAILS_FROM_NAME = self.PROJECT_NAME  # pylint: disable=invalid-name
+            self.EMAILS_FROM_NAME = self.PROJECT_NAME  # type: ignore  # pylint: disable=invalid-name
         return self
 
     @computed_field  # type: ignore[prop-decorator]
