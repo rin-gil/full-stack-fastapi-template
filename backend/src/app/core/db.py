@@ -37,15 +37,13 @@ class DatabaseManager:
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
-        Dependency to get a new database session for a request. Ensures the session is always closed.
+        Dependency to get a new database session for a request.
+        The session is managed by a middleware and will be closed automatically.
 
         :return: An asynchronous generator yielding a new session.
         """
         async with self._async_session_factory() as session:
-            try:
-                yield session
-            finally:
-                await session.close()
+            yield session
 
     async def connect_to_database(self) -> None:
         """

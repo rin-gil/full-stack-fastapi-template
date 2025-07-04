@@ -139,7 +139,7 @@ async def test_database_manager_get_session(
         assert isinstance(session, AsyncSession)
     mock_async_session_factory.return_value.__aenter__.assert_called_once()
     mock_async_session_factory.return_value.__aexit__.assert_called_once()
-    session.close.assert_called_once()  # pylint: disable=undefined-loop-variable
+    session.close.assert_not_called()  # pylint: disable=undefined-loop-variable
 
 
 @pytest.mark.asyncio

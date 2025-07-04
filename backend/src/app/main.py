@@ -8,12 +8,12 @@ from fastapi.routing import APIRoute
 
 # noinspection PyProtectedMember
 from loguru._logger import Logger
-from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import MainRouter
 from app.core.config import Settings, get_settings
 from app.core.db import DatabaseManager, get_db_manager
 from app.core.log_setup import get_logger
+from app.core.middleware import MiddlewareConfigurator
 
 __all__: tuple = ()
 
@@ -44,7 +44,8 @@ class AppFactory:
             fastapi_params["openapi_url"] = f"{self._settings.API_V1_STR}/openapi.json"
         # Create a FastAPI instance by unpacking the parameter dictionary
         self.app: FastAPI = FastAPI(**fastapi_params)
-        self._configure_middleware()
+        # Use the MiddlewareConfigurator to add all middleware
+        MiddlewareConfigurator(app=self.app, settings=self._settings, db_manager=self._db_manager).add_all_middleware()
         self._include_routers()
 
     @staticmethod
@@ -69,21 +70,6 @@ class AppFactory:
         yield
         logger.info("Closing the database connection.")
         await self._db_manager.close_database_connection()
-
-    def _configure_middleware(self) -> None:
-        """
-        Configures and adds CORS middleware to the application.
-
-        :return: None
-        """
-        if self._settings.all_cors_origins:
-            self.app.add_middleware(
-                middleware_class=CORSMiddleware,  # type: ignore
-                allow_origins=[str(origin) for origin in self._settings.all_cors_origins],
-                allow_credentials=True,
-                allow_methods=["*"],
-                allow_headers=["*"],
-            )
 
     def _include_routers(self) -> None:
         """
