@@ -41,6 +41,7 @@ const vitestConfig = defineVitestConfig({
     environment: "jsdom",
     setupFiles: "./tests/setupTests.ts",
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+    css: true,
     coverage: {
       ...configDefaults.coverage,
       provider: "v8",

@@ -250,4 +250,3 @@ cython_debug/
 # Vite
 .vite
 frontend/coverage
-frontend/playwright-report
