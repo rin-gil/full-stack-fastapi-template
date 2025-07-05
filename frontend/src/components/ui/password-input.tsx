@@ -1,22 +1,32 @@
+/**
+ * @file This module defines the `PasswordInput` component, a specialized and reusable
+ * input field for password entry.
+ *
+ * It enhances the standard Chakra UI Input by adding a visibility toggle
+ * and providing deep, type-safe integration with `react-hook-form`.
+ */
+
 "use client"
 
-import type {
-  ButtonProps,
-  GroupProps,
-  InputProps,
-  StackProps,
-} from "@chakra-ui/react"
+import type React from "react"
+import type { PointerEvent, ReactNode, RefObject } from "react"
+import { forwardRef, useRef } from "react"
+
+import type { ButtonProps, GroupProps, InputProps } from "@chakra-ui/react"
 import {
-  Box,
-  HStack,
   IconButton,
   Input,
-  Stack,
   mergeRefs,
   useControllableState,
 } from "@chakra-ui/react"
-import { forwardRef, useRef } from "react"
+import type {
+  FieldError,
+  FieldErrors,
+  FieldValues,
+  Path,
+} from "react-hook-form"
 import { FiEye, FiEyeOff } from "react-icons/fi"
+
 import { Field } from "./field"
 import { InputGroup } from "./input-group"
 
@@ -24,77 +34,85 @@ export interface PasswordVisibilityProps {
   defaultVisible?: boolean
   visible?: boolean
   onVisibleChange?: (visible: boolean) => void
-  visibilityIcon?: { on: React.ReactNode; off: React.ReactNode }
+  visibilityIcon?: { on: ReactNode; off: ReactNode }
 }
 
-export interface PasswordInputProps
-  extends InputProps,
+export interface PasswordInputProps<TFieldValues extends FieldValues>
+  extends Omit<InputProps, "name" | "type">,
     PasswordVisibilityProps {
   rootProps?: GroupProps
-  startElement?: React.ReactNode
-  type: string
-  errors: any
+  startElement?: ReactNode
+  name: Path<TFieldValues>
+  errors: FieldErrors<TFieldValues>
 }
 
-export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  function PasswordInput(props, ref) {
-    const {
-      rootProps,
-      defaultVisible,
-      visible: visibleProp,
-      onVisibleChange,
-      visibilityIcon = { on: <FiEye />, off: <FiEyeOff /> },
-      startElement,
-      type,
-      errors,
-      ...rest
-    } = props
+export const PasswordInput = forwardRef(function PasswordInput<
+  TFieldValues extends FieldValues,
+>(
+  props: PasswordInputProps<TFieldValues>,
+  ref: React.Ref<HTMLInputElement>,
+): React.ReactNode {
+  const {
+    rootProps,
+    defaultVisible,
+    visible: visibleProp,
+    onVisibleChange,
+    visibilityIcon = { on: <FiEye />, off: <FiEyeOff /> },
+    startElement,
+    name,
+    errors,
+    ...rest
+  } = props
 
-    const [visible, setVisible] = useControllableState({
+  const [visible, setVisible]: [boolean, (value: boolean) => void] =
+    useControllableState({
       value: visibleProp,
       defaultValue: defaultVisible || false,
       onChange: onVisibleChange,
     })
 
-    const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef: RefObject<HTMLInputElement> = useRef<HTMLInputElement>(null)
 
-    return (
-      <Field
-        invalid={!!errors[type]}
-        errorText={errors[type]?.message}
-        alignSelf="start"
+  const fieldError: FieldError | undefined = errors[name] as
+    | FieldError
+    | undefined
+
+  return (
+    <Field invalid={!!fieldError} errorText={fieldError?.message as ReactNode}>
+      <InputGroup
+        width="100%"
+        startElement={startElement}
+        endElement={
+          <VisibilityTrigger
+            disabled={rest.disabled}
+            onPointerDown={(e: PointerEvent<HTMLButtonElement>): void => {
+              if (rest.disabled) return
+              if (e.button !== 0) return
+              e.preventDefault()
+              setVisible(!visible)
+            }}
+          >
+            {visible ? visibilityIcon.off : visibilityIcon.on}
+          </VisibilityTrigger>
+        }
+        {...rootProps}
       >
-        <InputGroup
-          width="100%"
-          startElement={startElement}
-          endElement={
-            <VisibilityTrigger
-              disabled={rest.disabled}
-              onPointerDown={(e) => {
-                if (rest.disabled) return
-                if (e.button !== 0) return
-                e.preventDefault()
-                setVisible(!visible)
-              }}
-            >
-              {visible ? visibilityIcon.off : visibilityIcon.on}
-            </VisibilityTrigger>
-          }
-          {...rootProps}
-        >
-          <Input
-            {...rest}
-            ref={mergeRefs(ref, inputRef)}
-            type={visible ? "text" : "password"}
-          />
-        </InputGroup>
-      </Field>
-    )
-  },
-)
+        <Input
+          {...rest}
+          name={name}
+          ref={mergeRefs(ref, inputRef)}
+          type={visible ? "text" : "password"}
+        />
+      </InputGroup>
+    </Field>
+  )
+})
 
 const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
-  function VisibilityTrigger(props, ref) {
+  function VisibilityTrigger(
+    props: ButtonProps,
+    ref: React.Ref<HTMLButtonElement>,
+  ): React.ReactNode {
     return (
       <IconButton
         tabIndex={-1}
@@ -111,52 +129,3 @@ const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
     )
   },
 )
-
-interface PasswordStrengthMeterProps extends StackProps {
-  max?: number
-  value: number
-}
-
-export const PasswordStrengthMeter = forwardRef<
-  HTMLDivElement,
-  PasswordStrengthMeterProps
->(function PasswordStrengthMeter(props, ref) {
-  const { max = 4, value, ...rest } = props
-
-  const percent = (value / max) * 100
-  const { label, colorPalette } = getColorPalette(percent)
-
-  return (
-    <Stack align="flex-end" gap="1" ref={ref} {...rest}>
-      <HStack width="full" ref={ref} {...rest}>
-        {Array.from({ length: max }).map((_, index) => (
-          <Box
-            key={index}
-            height="1"
-            flex="1"
-            rounded="sm"
-            data-selected={index < value ? "" : undefined}
-            layerStyle="fill.subtle"
-            colorPalette="gray"
-            _selected={{
-              colorPalette,
-              layerStyle: "fill.solid",
-            }}
-          />
-        ))}
-      </HStack>
-      {label && <HStack textStyle="xs">{label}</HStack>}
-    </Stack>
-  )
-})
-
-function getColorPalette(percent: number) {
-  switch (true) {
-    case percent < 33:
-      return { label: "Low", colorPalette: "red" }
-    case percent < 66:
-      return { label: "Medium", colorPalette: "orange" }
-    default:
-      return { label: "High", colorPalette: "green" }
-  }
-}
