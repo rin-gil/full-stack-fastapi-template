@@ -4,12 +4,7 @@
     "enabled": true
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      "src/routeTree.gen.ts",
-      "playwright.config.ts",
-      "playwright-report"
-    ]
+    "ignore": ["node_modules", "src/routeTree.gen.ts"]
   },
   "linter": {
     "enabled": true,
