@@ -45,7 +45,15 @@ const vitestConfig = defineVitestConfig({
       ...configDefaults.coverage,
       provider: "v8",
       reporter: ["text", "json", "html"],
-      include: ["src/utils.ts"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        ...configDefaults.coverage.exclude,
+        "src/client",
+        "src/routeTree.gen.ts",
+        "src/main.tsx",
+        "src/theme.ts",
+        "src/theme/**/*.{ts,tsx}",
+      ],
     },
   },
 })
