@@ -3,6 +3,9 @@
 from collections.abc import AsyncGenerator, Awaitable, Callable
 
 from fastapi import FastAPI
+
+# noinspection PyProtectedMember
+from loguru._logger import Logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
@@ -11,8 +14,11 @@ from starlette.responses import Response
 
 from app.core.config import Settings
 from app.core.db import DatabaseManager
+from app.core.log_setup import get_logger
 
 __all__: tuple[str, ...] = ("MiddlewareConfigurator",)
+
+logger: Logger = get_logger()
 
 
 class DbSessionMiddleware(BaseHTTPMiddleware):
@@ -30,7 +36,7 @@ class DbSessionMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         """
-        Handles the request and ensures session management.
+        Handles the request and ensures session management and general exception handling.
 
         :param request: The incoming HTTP request.
         :param call_next: The function to call to process the request.
@@ -40,6 +46,11 @@ class DbSessionMiddleware(BaseHTTPMiddleware):
         session: AsyncSession = await anext(session_generator)
         try:
             response: Response = await call_next(request)
+        except Exception as exc:
+            logger.error(f"An unhandled exception occurred during request processing: {repr(exc)}", )
+            if request.scope.get("client"):
+                return Response(content="Internal Server Error", status_code=500)
+            return Response(status_code=204)
         finally:
             await session.close()
         return response

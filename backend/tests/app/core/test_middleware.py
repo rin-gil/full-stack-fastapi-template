@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import FastAPI
 from pytest_mock import MockerFixture
+from sqlalchemy.exc import InterfaceError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -71,12 +72,14 @@ def mock_db_manager(mocker: MockerFixture, mock_session: AsyncMock) -> MagicMock
 @pytest.fixture
 def mock_request(mocker: MockerFixture) -> MagicMock:
     """
-    Mocks the Request object.
+    Mocks the Request object with a client scope.
 
     :param mocker: Pytest mocker fixture.
     :return: A mocked Request object.
     """
-    return mocker.create_autospec(Request, instance=True)
+    req_mock: MagicMock = mocker.create_autospec(Request, instance=True)
+    req_mock.scope = {"client": ("127.0.0.1", 8000)}
+    return req_mock
 
 
 @pytest.fixture
@@ -109,14 +112,15 @@ async def test_db_session_middleware_happy_path(
     :return: None
     """
     middleware: DbSessionMiddleware = DbSessionMiddleware(app=mock_app, db_manager=mock_db_manager)
-    await middleware.dispatch(request=mock_request, call_next=mock_call_next)
+    response: Response = await middleware.dispatch(request=mock_request, call_next=mock_call_next)
     mock_db_manager.get_session.assert_called_once()
     mock_call_next.assert_awaited_once_with(mock_request)
     mock_session.close.assert_awaited_once()
+    assert response == mock_call_next.return_value
 
 
 @pytest.mark.asyncio
-async def test_db_session_middleware_closes_on_exception(
+async def test_middleware_returns_500_on_general_exception(
     mock_app: MagicMock,
     mock_db_manager: MagicMock,
     mock_session: AsyncMock,
@@ -135,11 +139,41 @@ async def test_db_session_middleware_closes_on_exception(
     """
     mock_call_next.side_effect = ValueError("Something went wrong")
     middleware: DbSessionMiddleware = DbSessionMiddleware(app=mock_app, db_manager=mock_db_manager)
-    with pytest.raises(expected_exception=ValueError, match="Something went wrong"):
-        await middleware.dispatch(request=mock_request, call_next=mock_call_next)
-    mock_db_manager.get_session.assert_called_once()
+    response: Response = await middleware.dispatch(request=mock_request, call_next=mock_call_next)
     mock_call_next.assert_awaited_once_with(mock_request)
     mock_session.close.assert_awaited_once()
+    assert response.status_code == 500
+    assert response.body == b"Internal Server Error"
+
+
+@pytest.mark.asyncio
+async def test_middleware_returns_204_on_interface_error_and_no_client(
+    mock_app: MagicMock,
+    mock_db_manager: MagicMock,
+    mock_session: AsyncMock,
+    mock_request: MagicMock,
+    mock_call_next: AsyncMock,
+) -> None:
+    """
+    Tests that the middleware handles a database interface error (like a disconnect).
+
+    :param mock_app: Mocked FastAPI application.
+    :param mock_db_manager: Mocked DatabaseManager.
+    :param mock_session: Mocked session.
+    :param mock_request: Mocked Request object.
+    :param mock_call_next: Mocked call_next function.
+    :return: None
+    """
+    # Simulate the specific error for a disconnected DB connection
+    mock_call_next.side_effect = InterfaceError(
+        statement="DB connection closed", orig=None, params=None  # type: ignore
+    )
+    # Simulate that the client has disconnected
+    mock_request.scope["client"] = None
+    middleware: DbSessionMiddleware = DbSessionMiddleware(app=mock_app, db_manager=mock_db_manager)
+    response: Response = await middleware.dispatch(request=mock_request, call_next=mock_call_next)
+    mock_session.close.assert_awaited_once()
+    assert response.status_code == 204
 
 
 @pytest.mark.parametrize(
