@@ -27,6 +27,11 @@ const viteConfig = defineConfig({
     },
   },
   plugins: [react(), TanStackRouterVite()],
+  // Production build configuration
+  build: {
+    // Minification of HTML, CSS, and JS to reduce file size in production builds.
+    minify: true,
+  },
 })
 
 // Defining the configuration for tests
