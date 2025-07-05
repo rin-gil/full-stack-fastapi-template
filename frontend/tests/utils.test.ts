@@ -1,7 +1,5 @@
 /**
- * @file Unit tests for the utility functions in `frontend/src/utils.ts`.
- * This file covers testing for form validation rules (passwordRules, confirmPasswordRules, namePattern, emailPattern)
- * and API error handling (extractApiErrorMessage).
+ * @file Unit tests for the src/utils.ts module.
  */
 
 import type { ValidationRules } from "@/utils"
