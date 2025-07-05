@@ -1,9 +1,5 @@
 /**
  * @file Unit tests for the `useAuth` custom React hook.
- * This file tests authentication functionalities including login, signup, logout,
- * and current user fetching, by mocking external dependencies like React Router,
- * TanStack Query, localStorage, custom toast, and the generated API client.
- * This test uses plain TypeScript (.ts) and avoids JSX syntax by using React.createElement.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
