@@ -6,10 +6,13 @@
  */
 
 import type { BoxProps, InputElementProps } from "@chakra-ui/react"
-// Use the components that are actually available in this project's setup.
 import { Group, InputElement } from "@chakra-ui/react"
-import type { ReactElement, ReactNode } from "react"
-// Bring back cloneElement, as it's necessary for the padding logic.
+import type {
+  ForwardRefExoticComponent,
+  ForwardedRef,
+  ReactElement,
+  ReactNode,
+} from "react"
 import { Children, cloneElement, forwardRef } from "react"
 
 export interface InputGroupProps extends BoxProps {
@@ -27,8 +30,11 @@ export interface InputGroupProps extends BoxProps {
  * props to make space for the start and end elements. This approach replaces the
  * previous unreliable logic based on external CSS variables with a robust theme token.
  */
-export const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(
-  function InputGroup(props, ref): ReactNode {
+export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
+  forwardRef<HTMLDivElement, InputGroupProps>(function InputGroup(
+    props: InputGroupProps,
+    ref: ForwardedRef<HTMLDivElement>,
+  ): ReactNode {
     const {
       startElement,
       startElementProps,
@@ -37,22 +43,14 @@ export const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(
       children,
       ...rest
     } = props
-
-    const child = Children.only(children)
-
+    const child: ReactElement = Children.only(children)
     const propsToClone: { ps?: string; pe?: string } = {}
-
-    // Based on browser inspection, the required padding to offset the icon
-    // corresponds to the theme's size token "10" (which is 2.5rem).
-    // This is a reliable, self-contained approach.
     if (startElement) {
       propsToClone.ps = "10"
     }
-
     if (endElement) {
       propsToClone.pe = "10"
     }
-
     return (
       <Group ref={ref} {...rest}>
         {startElement && (
@@ -73,5 +71,4 @@ export const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(
         )}
       </Group>
     )
-  },
-)
+  })
