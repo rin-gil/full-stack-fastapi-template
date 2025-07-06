@@ -32,17 +32,16 @@ export interface InputGroupProps extends BoxProps {
  */
 export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
   forwardRef<HTMLDivElement, InputGroupProps>(function InputGroup(
-    props: InputGroupProps,
-    ref: ForwardedRef<HTMLDivElement>,
-  ): ReactNode {
-    const {
+    {
       startElement,
       startElementProps,
       endElement,
       endElementProps,
       children,
       ...rest
-    } = props
+    }: InputGroupProps,
+    ref: ForwardedRef<HTMLDivElement>,
+  ): ReactNode {
     const child: ReactElement = Children.only(children)
     const propsToClone: { ps?: string; pe?: string } = {}
     if (startElement) {
@@ -73,5 +72,4 @@ export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
     )
   })
 
-// Set the display name for better debugging in React DevTools
 InputGroup.displayName = "InputGroup"
