@@ -1,41 +1,52 @@
 /**
- * @file Unit tests for the src/hooks/useCustomToast.ts custom React hook.
+ * @file Unit tests for src/hooks/useCustomToast.ts
+ * @description These tests verify that the hook's functions call their dependencies
+ * (toaster, utils) with the correct parameters, ensuring proper integration.
  */
 
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-// Mock the external dependencies from other modules
 import { toaster } from "@/components/ui/toaster"
 import useCustomToast from "@/hooks/useCustomToast.ts"
 import { extractApiErrorMessage } from "@/utils"
 
-// We tell Vitest to replace the actual modules with our mocks.
+// region MOCKS
+
+// Mock the toaster module to spy on the `create` method.
 vi.mock("@/components/ui/toaster", () => ({
   toaster: {
-    // We only care about the `create` method, so we mock it with a spy function.
     create: vi.fn(),
   },
 }))
 
+// Mock the utils module to isolate the hook from the `extractApiErrorMessage` implementation.
 vi.mock("@/utils", () => ({
-  // Mock the utility function to isolate the hook's own logic.
   extractApiErrorMessage: vi.fn(),
 }))
 
+// endregion
+
+// region TESTS
+
 describe("useCustomToast", (): void => {
-  // Before each test, we clear all mock history (e.g., call counts)
-  // to ensure tests are independent of each other.
+  /**
+   * Before each test, clear all mock history (e.g., call counts)
+   * to ensure tests are independent of each other.
+   */
   beforeEach((): void => {
     vi.clearAllMocks()
   })
 
+  /**
+   * Verifies that `showSuccessToast` calls `toaster.create` with the correct
+   * success-themed parameters.
+   */
   it("should call toaster.create with success parameters for showSuccessToast", (): void => {
     // Arrange: Render the hook to get access to its functions.
     const { result } = renderHook(() => useCustomToast())
     const successDescription = "Your profile has been updated."
-    // Act: Call the function we want to test. We wrap it in `act` because
-    // it could potentially cause a state update in a component.
+    // Act: Call the function we want to test.
     act((): void => {
       result.current.showSuccessToast(successDescription)
     })
@@ -48,6 +59,10 @@ describe("useCustomToast", (): void => {
     })
   })
 
+  /**
+   * Verifies that `showErrorToast` calls `toaster.create` with the correct
+   * error-themed parameters.
+   */
   it("should call toaster.create with error parameters for showErrorToast", (): void => {
     // Arrange
     const { result } = renderHook(() => useCustomToast())
@@ -65,22 +80,23 @@ describe("useCustomToast", (): void => {
     })
   })
 
+  /**
+   * Verifies that `showApiErrorToast` correctly uses the `extractApiErrorMessage`
+   * utility and passes its result to the generic error toast.
+   */
   it("should extract a message and call toaster.create for showApiErrorToast", (): void => {
     // Arrange
     const { result } = renderHook(() => useCustomToast())
     const apiError = new Error("Network Error")
     const extractedMessage = "This is the extracted API error message."
-    // We configure our mock to return a specific, predictable value for this test case.
     vi.mocked(extractApiErrorMessage).mockReturnValue(extractedMessage)
     // Act
     act((): void => {
       result.current.showApiErrorToast(apiError)
     })
     // Assert
-    // 1. Verify that our hook tried to extract the error message.
     expect(extractApiErrorMessage).toHaveBeenCalledTimes(1)
     expect(extractApiErrorMessage).toHaveBeenCalledWith(apiError)
-    // 2. Verify that the toast was created using the message from the (mocked) extractor function.
     expect(toaster.create).toHaveBeenCalledTimes(1)
     expect(toaster.create).toHaveBeenCalledWith({
       title: "Something went wrong!",
@@ -89,3 +105,5 @@ describe("useCustomToast", (): void => {
     })
   })
 })
+
+// endregion
