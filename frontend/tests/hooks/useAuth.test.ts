@@ -1,12 +1,13 @@
 /**
- * @file Unit tests for the `useAuth` custom React hook.
- * @description These tests use mocking to isolate the hook's logic
- * from its child dependencies, preventing environment-specific errors (CSS, providers).
+ * @file Unit tests for src/hooks/useAuth.ts
+ * @description These tests isolate the useAuth hook's logic by mocking API clients,
+ * navigation, and localStorage to ensure predictable behavior.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { renderHook, waitFor } from "@testing-library/react"
-import * as React from "react"
+import type { FC, ReactElement, ReactNode } from "react"
+import React from "react"
 import { type Mock, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { UserPublic, UserRegister } from "@/client"
@@ -14,19 +15,19 @@ import { ApiError as ApiErrorClass } from "@/client/core/ApiError"
 import type { ApiRequestOptions } from "@/client/core/ApiRequestOptions"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
-// --- Mocks ---
+// region MOCKS
+
+// --- Module Mocks ---
 vi.mock("@/client")
 vi.mock("@tanstack/react-router")
 
+// --- Function Mocks ---
 const mockShowApiErrorToastFn: Mock = vi.fn()
-const mockShowSuccessToastFn: Mock = vi.fn()
-const mockShowErrorToastFn: Mock = vi.fn()
-
 vi.mock("@/hooks/useCustomToast", () => ({
   default: vi.fn(() => ({
     showApiErrorToast: mockShowApiErrorToastFn,
-    showSuccessToast: mockShowSuccessToastFn,
-    showErrorToast: mockShowErrorToastFn,
+    showSuccessToast: vi.fn(),
+    showErrorToast: vi.fn(),
   })),
 }))
 
@@ -37,18 +38,33 @@ import {
 } from "@/client"
 import { useNavigate } from "@tanstack/react-router"
 
-// Mock localStorage
-const localStorageMock = (() => {
+// --- localStorage Mock ---
+/**
+ * @interface LocalStorageMock
+ * @description Defines the structure for our localStorage mock object.
+ */
+interface LocalStorageMock {
+  getItem: Mock
+  setItem: Mock
+  removeItem: Mock
+  clear: Mock
+}
+
+/**
+ * A mock implementation of the `window.localStorage` API.
+ * @type {LocalStorageMock}
+ */
+const localStorageMock: LocalStorageMock = (() => {
   let store: Record<string, string> = {}
   return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
+    getItem: vi.fn((key: string): string | null => store[key] || null),
+    setItem: vi.fn((key: string, value: string): void => {
       store[key] = value
     }),
-    removeItem: vi.fn((key: string) => {
+    removeItem: vi.fn((key: string): void => {
       delete store[key]
     }),
-    clear: vi.fn(() => {
+    clear: vi.fn((): void => {
       store = {}
     }),
   }
@@ -57,14 +73,10 @@ const localStorageMock = (() => {
 Object.defineProperty(window, "localStorage", { value: localStorageMock })
 
 /**
- * Creates a QueryClient instance configured for testing purposes.
+ * Creates a QueryClient instance configured for a stable test environment.
+ * It disables retries and garbage collection to prevent flaky tests.
  *
- * This QueryClient is set up with the following default options:
- * - Queries will not retry on failure.
- * - Queries will not be garbage collected automatically
- *   (infinity garbage collection time).
- *
- * @returns {QueryClient} A QueryClient instance with testing configurations.
+ * @returns {QueryClient} A new QueryClient instance for testing.
  */
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
@@ -76,12 +88,17 @@ const createTestQueryClient = (): QueryClient =>
     },
   })
 
-// --- Test Data Mocks ---
+// endregion
+
+// region TEST DATA
+
+/** Mock API request options for creating ApiError instances. */
 const mockApiRequestOptions: ApiRequestOptions = {
   url: "/mock-url",
   method: "GET",
 }
 
+/** Mock ApiError for a registration conflict. */
 const mockSignUpError = new ApiErrorClass(
   mockApiRequestOptions,
   {
@@ -93,6 +110,8 @@ const mockSignUpError = new ApiErrorClass(
   },
   "Email already registered",
 )
+
+/** Mock ApiError for an incorrect login. */
 const mockLoginError = new ApiErrorClass(
   mockApiRequestOptions,
   {
@@ -104,6 +123,8 @@ const mockLoginError = new ApiErrorClass(
   },
   "Incorrect username or password",
 )
+
+/** Mock ApiError for a failed user fetch due to invalid credentials. */
 const mockUserFetchError = new ApiErrorClass(
   mockApiRequestOptions,
   {
@@ -116,13 +137,15 @@ const mockUserFetchError = new ApiErrorClass(
   "Could not validate credentials",
 )
 
-// --- Tests ---
+// endregion
+
 describe("useAuth", (): void => {
   let queryClient: QueryClient
   const mockedLoginApi = loginLoginRouterLoginAccessToken as Mock
   const mockedReadMeApi = usersUsersRouterReadUserMe as Mock
   const mockedRegisterApi = usersUsersRouterRegisterUser as Mock
   const mockNavigateFn: Mock = vi.fn()
+
   beforeEach((): void => {
     vi.clearAllMocks()
     localStorageMock.clear()
@@ -132,33 +155,35 @@ describe("useAuth", (): void => {
   })
 
   /**
-   * A utility function to render the `useAuth` hook with a
-   * {@link https://tanstack.com/query/v4/docs/providers?from=reactQueryV3&to=reactQueryV4 | QueryClient}
-   * wrapper.
+   * Renders the `useAuth` hook within a `QueryClientProvider` for testing.
    *
-   * This is used to mock the `useAuth` hook in tests.
-   *
-   * @returns A render hook that renders the `useAuth` hook with a
-   * `QueryClientProvider` wrapper.
+   * @returns {import('@testing-library/react').RenderHookResult<import('@/hooks/useAuth').UseAuthReturn, unknown>}
+   * The result of rendering the hook.
    */
+  // @ts-ignore
   const renderAuthHook = () => {
     /**
-     * A React component that wraps the `useAuth` hook with a
-     * {@link https://tanstack.com/query/v4/docs/providers?from=reactQueryV3&to=reactQueryV4 | QueryClientProvider}
-     * component.
+     * A wrapper component that provides the `QueryClient` context via `React.createElement`.
+     * This method is used instead of JSX because this is a `.ts` file.
      *
-     * This is used to mock the `useAuth` hook in tests.
+     * @param {object} props - The component props.
+     * @param {ReactNode} props.children - The children to render.
+     * @returns {ReactElement} The children wrapped in the provider.
      */
-    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+    const wrapper: FC<{ children: ReactNode }> = ({
+      children,
+    }: { children: ReactNode }): ReactElement =>
       React.createElement(
         QueryClientProvider,
         { client: queryClient },
         children,
       )
+
     return renderHook(() => useAuth(), { wrapper })
   }
 
-  // Restore all tests and ensure they pass
+  // region TESTS
+
   describe("isLoggedIn", (): void => {
     it("should return false if access_token is not in localStorage", (): void => {
       expect(isLoggedIn()).toBe(false)
@@ -176,8 +201,10 @@ describe("useAuth", (): void => {
         id: "1",
         email: "test@example.com",
       } as UserPublic)
+
       const { result } = renderAuthHook()
       result.current.logout()
+
       expect(localStorageMock.removeItem).toHaveBeenCalledWith("access_token")
       expect(queryClient.getQueryData(["currentUser"])).toBeNull()
       expect(mockNavigateFn).toHaveBeenCalledWith({ to: "/login" })
@@ -196,7 +223,7 @@ describe("useAuth", (): void => {
       })
       const { result } = renderAuthHook()
       result.current.signUpMutation.mutate(mockUserRegisterData)
-      await waitFor((): void =>
+      await waitFor(() =>
         expect(result.current.signUpMutation.isSuccess).toBe(true),
       )
       expect(mockNavigateFn).toHaveBeenCalledWith({ to: "/login" })
@@ -205,7 +232,7 @@ describe("useAuth", (): void => {
       mockedRegisterApi.mockRejectedValueOnce(mockSignUpError)
       const { result } = renderAuthHook()
       result.current.signUpMutation.mutate(mockUserRegisterData)
-      await waitFor((): void =>
+      await waitFor(() =>
         expect(result.current.signUpMutation.isError).toBe(true),
       )
       expect(mockShowApiErrorToastFn).toHaveBeenCalledWith(mockSignUpError)
@@ -223,17 +250,20 @@ describe("useAuth", (): void => {
       const mockUser: UserPublic = { id: "1", email: "user@example.com" }
       mockedLoginApi.mockResolvedValueOnce(mockAccessTokenResponse)
       mockedReadMeApi.mockResolvedValueOnce(mockUser)
+
       const { result, rerender } = renderAuthHook()
       result.current.loginMutation.mutate(mockLoginData)
-      await waitFor((): void =>
+
+      await waitFor(() =>
         expect(result.current.loginMutation.isSuccess).toBe(true),
       )
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         "access_token",
         "mock-jwt-token",
       )
+
       rerender()
-      await waitFor((): void => expect(result.current.user).toEqual(mockUser))
+      await waitFor(() => expect(result.current.user).toEqual(mockUser))
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
       expect(mockNavigateFn).toHaveBeenCalledWith({ to: "/" })
     })
@@ -242,7 +272,7 @@ describe("useAuth", (): void => {
       mockedLoginApi.mockRejectedValueOnce(mockLoginError)
       const { result } = renderAuthHook()
       result.current.loginMutation.mutate(mockLoginData)
-      await waitFor((): void =>
+      await waitFor(() =>
         expect(result.current.loginMutation.isError).toBe(true),
       )
       expect(mockShowApiErrorToastFn).toHaveBeenCalledWith(mockLoginError)
@@ -257,9 +287,7 @@ describe("useAuth", (): void => {
       const mockUser: UserPublic = { id: "1", email: "existing@example.com" }
       mockedReadMeApi.mockResolvedValueOnce(mockUser)
       const { result } = renderAuthHook()
-      await waitFor((): void =>
-        expect(result.current.isUserLoading).toBe(false),
-      )
+      await waitFor(() => expect(result.current.isUserLoading).toBe(false))
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
       expect(result.current.user).toEqual(mockUser)
     })
@@ -268,11 +296,11 @@ describe("useAuth", (): void => {
       localStorageMock.setItem("access_token", "invalid-token")
       mockedReadMeApi.mockRejectedValueOnce(mockUserFetchError)
       const { result } = renderAuthHook()
-      await waitFor((): void =>
-        expect(result.current.isUserLoading).toBe(false),
-      )
+      await waitFor(() => expect(result.current.isUserLoading).toBe(false))
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
       expect(result.current.user).toBeUndefined()
     })
   })
+
+  // endregion
 })
