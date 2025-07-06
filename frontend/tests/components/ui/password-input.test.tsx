@@ -67,6 +67,7 @@ vi.mock("@/components/ui/input-group", () => ({
 
 vi.mock("@chakra-ui/react", async (importOriginal) => {
   const original = await importOriginal<typeof import("@chakra-ui/react")>()
+
   const MockChakraInput = React.forwardRef<
     HTMLInputElement,
     React.InputHTMLAttributes<HTMLInputElement>
@@ -75,11 +76,26 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
   })
   MockChakraInput.displayName = "MockChakraInput"
 
+  /**
+   * This mock for IconButton correctly filters out Chakra-specific props
+   * to prevent them from being passed to the DOM, resolving React warnings.
+   */
   const MockChakraIconButton = React.forwardRef<
     HTMLButtonElement,
-    React.ButtonHTMLAttributes<HTMLButtonElement>
+    any // Using 'any' here is a pragmatic choice for the mock, as the props are a mix of HTML and Chakra-specific ones.
   >(function MockChakraIconButton(props, ref): ReactElement {
-    const { children, ...rest } = props
+    // Correctly destructure and ignore non-standard props for a native button
+    const {
+      aspectRatio,
+      me,
+      size,
+      variant,
+      height,
+      color,
+      children,
+      ...rest // `rest` will now only contain valid HTML button attributes
+    } = props
+
     return (
       <button ref={ref} type="button" {...rest}>
         {children}
