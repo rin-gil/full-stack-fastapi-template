@@ -1,6 +1,6 @@
 /**
  * @file Frontend theme configuration for Chakra UI.
- * This file defines the global CSS styles, design tokens (colors),
+ * @description This file defines the global CSS styles, design tokens (colors),
  * and component-specific style recipes (like for buttons) for the application.
  * It extends Chakra UI's defaultConfig to establish a custom design system.
  */
