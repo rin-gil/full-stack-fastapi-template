@@ -1,6 +1,6 @@
 /**
  * @file Custom React hook for managing authentication state and actions.
- * This hook centralizes user login, registration, logout, and fetching
+ * @description This hook centralizes user login, registration, logout, and fetching
  * the authenticated user's data using TanStack Query for efficient state management.
  */
 
