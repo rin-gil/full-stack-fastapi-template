@@ -12,6 +12,7 @@ import { describe, expect, it, vi } from "vitest"
 import { InputGroup } from "@/components/ui/input-group"
 
 // region MOCKING DEPENDENCIES
+
 vi.mock("@chakra-ui/react", async (importOriginal) => {
   const original = await importOriginal<typeof import("@chakra-ui/react")>()
   // noinspection JSUnusedGlobalSymbols
