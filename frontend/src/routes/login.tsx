@@ -1,7 +1,9 @@
 /**
- * @file Login page component.
- * This component handles user login functionality, including form submission,
- * validation, and interaction with the authentication hook.
+ * @file Defines the Login page component.
+ * @description This component provides the user interface and logic for user login.
+ * It includes a form with validation, handles submission, and interacts with the
+ * `useAuth` hook to perform the authentication. It also handles redirection for
+ * already authenticated users.
  */
 
 import { Container, Image, Input, Text } from "@chakra-ui/react"
@@ -14,10 +16,7 @@ import type { JSX } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiLock, FiMail } from "react-icons/fi"
 
-import type {
-  LoginLoginRouterLoginAccessTokenData,
-  login_access_token,
-} from "@/client"
+import type { login_access_token } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
@@ -29,8 +28,9 @@ import { emailPattern, passwordRules } from "../utils"
 export const Route = createFileRoute("/login")({
   component: Login,
   /**
-   * If the user is already logged in, redirect them to the home page before
-   * loading the login page.
+   * Loader function that runs before the component mounts.
+   * If the user is already logged in, it redirects them to the home page.
+   * @throws {Error} A redirect error if the user is authenticated.
    */
   beforeLoad: async (): Promise<void> => {
     if (isLoggedIn()) {
@@ -41,20 +41,17 @@ export const Route = createFileRoute("/login")({
   },
 })
 
-type LoginFormInputs = LoginLoginRouterLoginAccessTokenData["formData"]
+/**
+ * @type LoginFormInputs
+ * @description Defines the type for the login form's input fields, derived from the generated API client types.
+ */
+type LoginFormInputs = login_access_token
 
 /**
- * This component handles user login functionality, including form submission,
- * validation, and interaction with the authentication hook.
+ * The main component for the Login page.
+ * It renders a form for user authentication and handles all related logic.
  *
- * The component is a TanStack Router route, and is associated with the route
- * path "/login". It renders a centered login form with input fields for
- * username and password, as well as links for password recovery and
- * registration. The form is validated using React Hook Form, and the
- * authentication hook is used to handle the login mutation.
- *
- * The component also redirects the user to the home page if they are already
- * logged in.
+ * @returns {JSX.Element} The rendered Login page component.
  */
 function Login(): JSX.Element {
   const { loginMutation } = useAuth()
@@ -72,16 +69,12 @@ function Login(): JSX.Element {
   })
 
   /**
-   * Handles the form submission event for the login form.
+   * Handles the form submission by calling the `loginMutation`.
    *
-   * This function is triggered when the login form is submitted. It receives
-   * the form data, which includes the username and password, and uses the
-   * `loginMutation` hook to perform the login action.
-   *
-   * @param data - The form data containing the user's login credentials.
+   * @param {LoginFormInputs} data - The validated form data.
    */
   const onSubmit: SubmitHandler<LoginFormInputs> = (
-    data: login_access_token,
+    data: LoginFormInputs,
   ): void => {
     loginMutation.mutate(data)
   }
@@ -141,3 +134,5 @@ function Login(): JSX.Element {
     </Container>
   )
 }
+
+Login.displayName = "Login"
