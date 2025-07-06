@@ -1,5 +1,7 @@
 /**
  * @file Unit tests for the `useAuth` custom React hook.
+ * @description These tests use mocking to isolate the hook's logic
+ * from its child dependencies, preventing environment-specific errors (CSS, providers).
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -126,6 +128,7 @@ describe("useAuth", (): void => {
     localStorageMock.clear()
     queryClient = createTestQueryClient()
     vi.mocked(useNavigate).mockReturnValue(mockNavigateFn)
+    mockedReadMeApi.mockResolvedValue(null)
   })
 
   /**
