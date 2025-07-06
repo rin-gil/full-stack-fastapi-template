@@ -1,13 +1,9 @@
 /**
- * @file Vite and Vitest configuration file for the frontend.
- * This file sets up:
- * - Path aliases for easier imports (`@` mapping to `src`).
- * - Vite plugins for React (SWC) and TanStack Router.
- * - Vitest specific testing configurations, including:
- *   - Global variables and JSDOM environment.
- *   - Test file inclusion patterns.
- *   - Coverage reporting settings for `src/utils.ts`.
- * The configurations are merged to ensure both development/build and test environments are correctly set up.
+ * @file Vite and Vitest configuration.
+ * @description This file configures the Vite build tool and the Vitest test runner.
+ * It defines path aliases, plugins (React, TanStack Router), and test environment
+ * settings like globals, setup files, and code coverage rules. The configurations
+ * are merged to create a unified setup for development, production, and testing.
  */
 
 import path from "node:path"
@@ -19,8 +15,12 @@ import {
   defineConfig as defineVitestConfig,
 } from "vitest/config"
 
-// Defining the basic configuration of Vite
-const viteConfig = defineConfig({
+/**
+ * Base Vite configuration for development and production builds.
+ * It defines shared settings like path aliases and plugins.
+ * @type {import('vite').UserConfig}
+ */
+const viteConfig: import("vite").UserConfig = defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -33,8 +33,13 @@ const viteConfig = defineConfig({
   },
 })
 
-// Defining the configuration for tests
-const vitestConfig = defineVitestConfig({
+/**
+ * Vitest-specific configuration for the test environment.
+ * This setup enables a JSDOM environment, specifies setup files, and configures
+ * `server.deps.inline` to prevent CSS parsing errors with UI libraries.
+ * @type {import('vitest/config').UserConfig}
+ */
+const vitestConfig: import("vitest/config").UserConfig = defineVitestConfig({
   test: {
     globals: true,
     environment: "jsdom",
@@ -65,5 +70,9 @@ const vitestConfig = defineVitestConfig({
   },
 })
 
-// Combining configurations
+/**
+ * The final, merged configuration object.
+ * It combines the base `viteConfig` with the `vitestConfig` to provide a
+ * unified setup for both the development/build server and the test runner.
+ */
 export default mergeConfig(viteConfig, vitestConfig)
