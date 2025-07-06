@@ -1,7 +1,8 @@
 /**
- * @file This module defines the InputGroup component, a layout container
- * that enhances an input field with start and end elements, such as icons.
- * It works by cloning the child Input and injecting padding to make space for the elements.
+ * @file This module defines the InputGroup component.
+ * @description A layout container that enhances an input field with start and end elements,
+ * such as icons. It works by cloning the child Input and injecting padding to make space
+ * for the elements.
  */
 
 import type { BoxProps, InputElementProps } from "@chakra-ui/react"
