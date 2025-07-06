@@ -72,3 +72,6 @@ export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
       </Group>
     )
   })
+
+// Set the display name for better debugging in React DevTools
+InputGroup.displayName = "InputGroup"
