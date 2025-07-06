@@ -1,26 +1,34 @@
 /**
- * @file Utility functions and constants for form validation and error handling.
- * @description This module provides reusable, framework-agnostic helpers.
+ * @file Defines application-wide utility functions and constants.
+ * @description This module provides reusable helpers for form validation (e.g., regex patterns)
+ * and a standardized function for extracting user-friendly error messages from API responses.
  */
 
 import type { ApiError } from "./client"
 
 /**
- * Validation pattern for email addresses.
- * Intended for use with form validation libraries like React Hook Form.
+ * Validation pattern object for email addresses.
+ * @type {{value: RegExp, message: string}}
  */
-export const emailPattern = {
+export const emailPattern: { value: RegExp; message: string } = {
   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
   message: "Invalid email address",
 }
 
-export const namePattern = {
+/**
+ * Validation pattern object for user names. Supports Unicode letters.
+ * @type {{value: RegExp, message: string}}
+ */
+export const namePattern: { value: RegExp; message: string } = {
   value: /^(?=.{1,30}$)\p{L}(?:[\p{L}\s\-'’]*\p{L})?$/u,
   message:
     "Name must be 1-30 characters, start and end with a letter, and can contain spaces, hyphens, or apostrophes.",
 }
 
-// A helper type for React Hook Form rules
+/**
+ * @type ValidationRules
+ * @description A helper type defining the structure for React Hook Form validation rules.
+ */
 export type ValidationRules = {
   required?: string
   minLength?: { value: number; message: string }
@@ -30,10 +38,11 @@ export type ValidationRules = {
 /**
  * Generates validation rules for a password field.
  *
- * @param isRequired - Whether the password is required. Defaults to true.
- * @returns An object with validation rules for React Hook Form.
+ * @param {boolean} [isRequired=true] - If true, a `required` rule is added.
+ * @returns {ValidationRules} An object containing validation rules.
  */
-export const passwordRules = (isRequired = true): ValidationRules => {
+// biome-ignore lint/style/noInferrableTypes: Enforcing explicit types for clarity as per project style guide.
+export const passwordRules = (isRequired: boolean = true): ValidationRules => {
   const rules: ValidationRules = {
     minLength: { value: 8, message: "Password must be at least 8 characters" },
   }
@@ -45,22 +54,22 @@ export const passwordRules = (isRequired = true): ValidationRules => {
 
 /**
  * Generates validation rules for a password confirmation field.
- * Checks if the value matches another password field.
  *
- * @param getValues - A function from React Hook Form's `useForm` that returns current form values.
- * @param isRequired - Whether the confirmation is required. Defaults to true.
- * @returns An object with validation rules for React Hook Form.
+ * @param {() => Record<string, any>} getValues - The `getValues` function from `react-hook-form`.
+ * @param {boolean} [isRequired=true] - If true, a `required` rule is added.
+ * @returns {ValidationRules} An object containing validation rules.
  */
 export const confirmPasswordRules = (
   getValues: () => Record<string, any>,
-  isRequired = true,
+  // biome-ignore lint/style/noInferrableTypes: Enforcing explicit types for clarity as per project style guide.
+  isRequired: boolean = true,
 ): ValidationRules => {
   const rules: ValidationRules = {
     /**
      * Validates that a confirmation password matches the original password.
      *
-     * @param value - The confirmation password to validate.
-     * @returns True if the confirmation password matches; otherwise, an error message.
+     * @param {any} value - The value of the confirmation password field.
+     * @returns {true | string} True if validation passes, or an error message string if it fails.
      */
     validate: (value: any): true | "The passwords do not match" => {
       const password: any = getValues().password || getValues().new_password
@@ -77,14 +86,13 @@ export const confirmPasswordRules = (
 }
 
 /**
- * Safely extracts a user-friendly error message from an ApiError object.
- * It checks for different structures of the error body from the backend.
+ * Safely extracts a user-friendly error message from an ApiError object or other error types.
+ * It intelligently checks for different error structures from the backend.
  *
- * @param err The ApiError object or other error thrown by the client.
- * @returns A string containing the error message.
+ * @param {unknown} err - The error object, which could be an ApiError, an Error, or unknown.
+ * @returns {string} A user-friendly error message.
  */
 export const extractApiErrorMessage = (err: unknown): string => {
-  // Ensure we are dealing with an ApiError-like object
   if (
     typeof err === "object" &&
     err !== null &&
@@ -92,10 +100,8 @@ export const extractApiErrorMessage = (err: unknown): string => {
     "status" in err
   ) {
     const body = (err as ApiError).body as unknown
-    // Check if body is an object and has a 'detail' property
     if (typeof body === "object" && body !== null && "detail" in body) {
       const detail: unknown = (body as { detail: unknown }).detail
-      // Case 1: Detail is an array of objects (FastAPI validation error)
       if (
         Array.isArray(detail) &&
         detail.length > 0 &&
@@ -103,19 +109,17 @@ export const extractApiErrorMessage = (err: unknown): string => {
         detail[0] !== null &&
         "msg" in detail[0]
       ) {
-        // We can be reasonably sure it's a validation error message
         return String((detail[0] as { msg: unknown }).msg)
       }
-      // Case 2: Detail is a simple string
       if (typeof detail === "string") {
         return detail
       }
     }
   }
-  // Also handle cases where the error might be a simple Error object
+
   if (err instanceof Error) {
     return err.message
   }
-  // Fallback for unknown error structures
+
   return "An unexpected error occurred."
 }
