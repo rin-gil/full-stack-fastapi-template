@@ -129,3 +129,7 @@ const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
     )
   },
 )
+
+// Set the display name for better debugging in React DevTools
+PasswordInput.displayName = "PasswordInput"
+VisibilityTrigger.displayName = "VisibilityTrigger"
