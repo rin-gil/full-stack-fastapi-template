@@ -1,13 +1,20 @@
 /**
- * @file Chakra UI Recipe for the Button component.
- * @description This file defines the base styles and available variants (e.g., 'ghost')
- * for all Button components used throughout the application.
- * It centralizes button styling configuration, promoting consistency and maintainability.
+ * @file Defines the Chakra UI style recipe for the Button component.
+ * @description This file contains the base styles and variants (e.g., 'ghost')
+ * for all Button components. It centralizes button styling to promote
+ * consistency and maintainability.
  */
 
 // biome-ignore lint/style/useImportType: <explanation>
 import { RecipeDefinition, defineRecipe } from "@chakra-ui/react"
 
+/**
+ * Defines the style recipe for the application's Button components.
+ * This includes base styles applied to all buttons and specific styles
+ * for different variants.
+ *
+ * @type {RecipeDefinition}
+ */
 export const buttonRecipe: RecipeDefinition = defineRecipe({
   // Basic styles that apply to all buttons using this recipe
   base: {
