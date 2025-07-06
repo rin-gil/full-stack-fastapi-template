@@ -16,7 +16,7 @@ import type { JSX } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiLock, FiMail } from "react-icons/fi"
 
-import type { login_access_token } from "@/client"
+import type { login_access_token as LoginFormInputs } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
@@ -42,19 +42,13 @@ export const Route = createFileRoute("/login")({
 })
 
 /**
- * @type LoginFormInputs
- * @description Defines the type for the login form's input fields, derived from the generated API client types.
- */
-type LoginFormInputs = login_access_token
-
-/**
  * The main component for the Login page.
  * It renders a form for user authentication and handles all related logic.
  *
  * @returns {JSX.Element} The rendered Login page component.
  */
-function Login(): JSX.Element {
-  const { loginMutation } = useAuth()
+export function Login(): JSX.Element {
+  const { loginMutation, error, resetError } = useAuth()
   const {
     register,
     handleSubmit,
@@ -68,15 +62,14 @@ function Login(): JSX.Element {
     },
   })
 
-  /**
-   * Handles the form submission by calling the `loginMutation`.
-   *
-   * @param {LoginFormInputs} data - The validated form data.
-   */
-  const onSubmit: SubmitHandler<LoginFormInputs> = (
-    data: LoginFormInputs,
-  ): void => {
-    loginMutation.mutate(data)
+  const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
+    if (isSubmitting) return
+    resetError()
+    try {
+      await loginMutation.mutateAsync({ formData: data })
+    } catch {
+      // Error is handled by the `onError` callback in the `useAuth` hook.
+    }
   }
 
   return (
@@ -98,7 +91,10 @@ function Login(): JSX.Element {
         alignSelf="center"
         mb={4}
       />
-      <Field invalid={!!errors.username} errorText={errors.username?.message}>
+      <Field
+        invalid={!!errors.username || !!error}
+        errorText={errors.username?.message || error}
+      >
         <InputGroup w="100%" startElement={<FiMail />}>
           <Input
             id="username"
@@ -111,14 +107,12 @@ function Login(): JSX.Element {
           />
         </InputGroup>
       </Field>
-
       <PasswordInput
         startElement={<FiLock />}
         placeholder="Password"
         errors={errors}
         {...register("password", passwordRules())}
       />
-
       <RouterLink to="/recover-password" className="main-link">
         Forgot Password?
       </RouterLink>
