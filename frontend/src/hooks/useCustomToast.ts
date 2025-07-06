@@ -1,9 +1,9 @@
 /**
- * @file This module defines the useCustomToast hook, providing a centralized mechanism
- * for displaying toast notifications in the application. It abstracts the basic implementation
- * of the notification component and offers standardized functions for displaying messages
- * about success, general errors, and specific API errors, ensuring a consistent
- * user experience when providing feedback.
+ * @file Defines the `useCustomToast` hook.
+ * @description Provides a centralized mechanism for displaying toast notifications.
+ * It abstracts the underlying toast component implementation and offers standardized
+ * functions for displaying messages about success, general errors, and specific
+ * API errors, ensuring a consistent user experience when providing feedback.
  */
 
 "use client"
@@ -12,16 +12,37 @@ import { toaster } from "@/components/ui/toaster"
 import { extractApiErrorMessage } from "@/utils"
 
 /**
- * Provides a centralized mechanism for displaying toast notifications in the application.
- *
- * @returns An object containing `showSuccessToast`, `showErrorToast`, and `showApiErrorToast`
- * functions.
+ * @interface UseCustomToastReturn
+ * @description Defines the object returned by the useCustomToast hook.
  */
-const useCustomToast = () => {
+interface UseCustomToastReturn {
+  /**
+   * Displays a success toast with a custom message.
+   * @param {string} description - The message to display.
+   */
+  showSuccessToast: (description: string) => void
+  /**
+   * Displays a generic error toast with a custom message.
+   * @param {string} description - The error message to display.
+   */
+  showErrorToast: (description: string) => void
+  /**
+   * Displays an error toast with a message extracted from an API error.
+   * @param {unknown} error - The error object from a failed API call.
+   */
+  showApiErrorToast: (error: unknown) => void
+}
+
+/**
+ * Provides a centralized mechanism for displaying toast notifications.
+ *
+ * @returns {UseCustomToastReturn} An object containing functions to show various toasts.
+ */
+const useCustomToast = (): UseCustomToastReturn => {
   /**
    * Displays a success toast with a custom message.
    *
-   * @param description - The message to display in the toast.
+   * @param {string} description - The message to display in the toast.
    */
   const showSuccessToast = (description: string): void => {
     toaster.create({
@@ -34,7 +55,7 @@ const useCustomToast = () => {
   /**
    * Displays a generic error toast with a custom message.
    *
-   * @param description - The error message to display.
+   * @param {string} description - The error message to display.
    */
   const showErrorToast = (description: string): void => {
     toaster.create({
@@ -45,12 +66,13 @@ const useCustomToast = () => {
   }
 
   /**
-   * Takes an API error object, extracts a user-friendly message, and displays it in an error toast.
+   * Takes an API error object, extracts a user-friendly message,
+   * and displays it in an error toast.
    *
-   * @param error - The error object, typically from a failed API call.
+   * @param {unknown} error - The error object, typically from a failed API call.
    */
   const showApiErrorToast = (error: unknown): void => {
-    const errorMessage = extractApiErrorMessage(error)
+    const errorMessage: string = extractApiErrorMessage(error)
     showErrorToast(errorMessage)
   }
 
