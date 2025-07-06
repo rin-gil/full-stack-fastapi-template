@@ -25,7 +25,6 @@ import useCustomToast from "./useCustomToast"
 
 /**
  * Checks if an access token exists in localStorage, indicating a logged-in state.
- *
  * @returns {boolean} True if an access token is found, false otherwise.
  */
 const isLoggedIn = (): boolean => {
@@ -33,7 +32,8 @@ const isLoggedIn = (): boolean => {
 }
 
 /**
- * Interface representing the data returned by the useAuth hook.
+ * @interface UseAuthReturn
+ * @description Interface representing the data returned by the useAuth hook.
  */
 interface UseAuthReturn {
   /**
@@ -107,7 +107,7 @@ const useAuth = (): UseAuthReturn => {
     /**
      * The mutation function to register a new user.
      *
-     * @param {UserRegister} data The registration form data.
+     * @param {UserRegister} data - The registration form data.
      * @returns {Promise<UserPublic>} The newly registered user's data.
      */
     mutationFn: (data: UserRegister): Promise<UserPublic> =>
@@ -123,7 +123,7 @@ const useAuth = (): UseAuthReturn => {
      * Error handler for the signUp mutation.
      * Shows a toast notification with the error message.
      *
-     * @param {ApiError} err The error object returned by the API.
+     * @param {ApiError} err - The error object returned by the API.
      */
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
@@ -142,7 +142,7 @@ const useAuth = (): UseAuthReturn => {
    * Helper function to log in a user and store the access token.
    * Invalidates the currentUser query to re-fetch user data.
    *
-   * @param data The form data for login (username and password).
+   * @param {LoginLoginRouterLoginAccessTokenData["formData"]} data - The form data for login (username and password).
    * @returns {Promise<void>} A promise that resolves after the token is stored and query invalidated.
    */
   const loginWithToken = async (
@@ -152,7 +152,6 @@ const useAuth = (): UseAuthReturn => {
       formData: data,
     })
     localStorage.setItem("access_token", response.access_token)
-    // After setting the token, invalidate the currentUser query so it reloads
     await queryClient.invalidateQueries({ queryKey: ["currentUser"] })
   }
 
@@ -180,7 +179,6 @@ const useAuth = (): UseAuthReturn => {
      * Displays a toast notification with the error message.
      *
      * @param {ApiError} err - The error object returned by the API.
-     * @returns {void}
      */
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
@@ -193,7 +191,6 @@ const useAuth = (): UseAuthReturn => {
    */
   const logout = (): void => {
     localStorage.removeItem("access_token")
-    // Reset user data to null to trigger immediate UI updates in dependent components.
     queryClient.setQueryData(["currentUser"], null)
     void navigate({ to: "/login" })
   }
