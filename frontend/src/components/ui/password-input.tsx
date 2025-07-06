@@ -2,7 +2,7 @@
  * @file This module defines the `PasswordInput` component, a specialized and reusable
  * input field for password entry.
  *
- * It enhances the standard Chakra UI Input by adding a visibility toggle
+ * @description It enhances the standard Chakra UI Input by adding a visibility toggle
  * and providing deep, type-safe integration with `react-hook-form`.
  */
 
