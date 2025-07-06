@@ -38,7 +38,7 @@ const isLoggedIn = (): boolean => {
  * @interface UseAuthReturn
  * @description Interface representing the data returned by the useAuth hook.
  */
-interface UseAuthReturn {
+export interface UseAuthReturn {
   /**
    * Mutation for user registration.
    * @type {UseMutationResult<UserPublic, ApiError, UserRegister>}
