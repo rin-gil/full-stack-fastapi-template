@@ -160,7 +160,6 @@ describe("useAuth", (): void => {
    * @returns {import('@testing-library/react').RenderHookResult<import('@/hooks/useAuth').UseAuthReturn, unknown>}
    * The result of rendering the hook.
    */
-  // @ts-ignore
   const renderAuthHook = () => {
     /**
      * A wrapper component that provides the `QueryClient` context via `React.createElement`.
@@ -223,7 +222,7 @@ describe("useAuth", (): void => {
       })
       const { result } = renderAuthHook()
       result.current.signUpMutation.mutate(mockUserRegisterData)
-      await waitFor(() =>
+      await waitFor((): void =>
         expect(result.current.signUpMutation.isSuccess).toBe(true),
       )
       expect(mockNavigateFn).toHaveBeenCalledWith({ to: "/login" })
@@ -232,7 +231,7 @@ describe("useAuth", (): void => {
       mockedRegisterApi.mockRejectedValueOnce(mockSignUpError)
       const { result } = renderAuthHook()
       result.current.signUpMutation.mutate(mockUserRegisterData)
-      await waitFor(() =>
+      await waitFor((): void =>
         expect(result.current.signUpMutation.isError).toBe(true),
       )
       expect(mockShowApiErrorToastFn).toHaveBeenCalledWith(mockSignUpError)
@@ -254,7 +253,7 @@ describe("useAuth", (): void => {
       const { result, rerender } = renderAuthHook()
       result.current.loginMutation.mutate(mockLoginData)
 
-      await waitFor(() =>
+      await waitFor((): void =>
         expect(result.current.loginMutation.isSuccess).toBe(true),
       )
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
@@ -263,7 +262,7 @@ describe("useAuth", (): void => {
       )
 
       rerender()
-      await waitFor(() => expect(result.current.user).toEqual(mockUser))
+      await waitFor((): void => expect(result.current.user).toEqual(mockUser))
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
       expect(mockNavigateFn).toHaveBeenCalledWith({ to: "/" })
     })
@@ -272,7 +271,7 @@ describe("useAuth", (): void => {
       mockedLoginApi.mockRejectedValueOnce(mockLoginError)
       const { result } = renderAuthHook()
       result.current.loginMutation.mutate(mockLoginData)
-      await waitFor(() =>
+      await waitFor((): void =>
         expect(result.current.loginMutation.isError).toBe(true),
       )
       expect(mockShowApiErrorToastFn).toHaveBeenCalledWith(mockLoginError)
@@ -287,7 +286,9 @@ describe("useAuth", (): void => {
       const mockUser: UserPublic = { id: "1", email: "existing@example.com" }
       mockedReadMeApi.mockResolvedValueOnce(mockUser)
       const { result } = renderAuthHook()
-      await waitFor(() => expect(result.current.isUserLoading).toBe(false))
+      await waitFor((): void =>
+        expect(result.current.isUserLoading).toBe(false),
+      )
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
       expect(result.current.user).toEqual(mockUser)
     })
@@ -296,7 +297,9 @@ describe("useAuth", (): void => {
       localStorageMock.setItem("access_token", "invalid-token")
       mockedReadMeApi.mockRejectedValueOnce(mockUserFetchError)
       const { result } = renderAuthHook()
-      await waitFor(() => expect(result.current.isUserLoading).toBe(false))
+      await waitFor((): void =>
+        expect(result.current.isUserLoading).toBe(false),
+      )
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
       expect(result.current.user).toBeUndefined()
     })
