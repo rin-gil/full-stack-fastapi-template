@@ -15,11 +15,36 @@ import type {
 } from "react"
 import { Children, cloneElement, forwardRef } from "react"
 
+/**
+ * @interface InputGroupProps
+ * @description Defines the props for the InputGroup component.
+ * @extends BoxProps
+ */
 export interface InputGroupProps extends BoxProps {
+  /**
+   * Props to be passed to the start InputElement container.
+   * @type {InputElementProps}
+   */
   startElementProps?: InputElementProps
+  /**
+   * Props to be passed to the end InputElement container.
+   * @type {InputElementProps}
+   */
   endElementProps?: InputElementProps
+  /**
+   * The element to display at the start of the input.
+   * @type {ReactNode}
+   */
   startElement?: ReactNode
+  /**
+   * The element to display at the end of the input.
+   * @type {ReactNode}
+   */
   endElement?: ReactNode
+  /**
+   * The single child of the InputGroup, which must be an Input-like component.
+   * @type {ReactElement<InputElementProps>}
+   */
   children: ReactElement<InputElementProps>
 }
 
@@ -29,6 +54,10 @@ export interface InputGroupProps extends BoxProps {
  * It clones its single child (the input) and injects `ps` (padding-start) or `pe` (padding-end)
  * props to make space for the start and end elements. This approach replaces the
  * previous unreliable logic based on external CSS variables with a robust theme token.
+ *
+ * @param {InputGroupProps} props - The props for the component, destructured.
+ * @param {ForwardedRef<HTMLDivElement>} ref - The ref forwarded to the underlying Group element.
+ * @returns {ReactNode} The rendered InputGroup component.
  */
 export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
   forwardRef<HTMLDivElement, InputGroupProps>(function InputGroup(
