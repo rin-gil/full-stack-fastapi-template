@@ -30,29 +30,80 @@ import { FiEye, FiEyeOff } from "react-icons/fi"
 import { Field } from "./field"
 import { InputGroup } from "./input-group"
 
+/**
+ * @interface PasswordVisibilityProps
+ * @description Props for controlling the visibility of the password.
+ */
 export interface PasswordVisibilityProps {
+  /**
+   * The initial visibility state of the password when uncontrolled.
+   * @type {boolean}
+   */
   defaultVisible?: boolean
+  /**
+   * The controlled visibility state of the password.
+   * @type {boolean}
+   */
   visible?: boolean
+  /**
+   * Callback fired when the visibility state changes.
+   * @param {boolean} visible - The new visibility state.
+   */
   onVisibleChange?: (visible: boolean) => void
+  /**
+   * Custom icons for the visibility toggle.
+   * @type {{ on: ReactNode; off: ReactNode }}
+   */
   visibilityIcon?: { on: ReactNode; off: ReactNode }
 }
 
+// noinspection JSValidateJSDoc
+/**
+ * @interface PasswordInputProps
+ * @description Defines the props for the PasswordInput component.
+ * @template TFieldValues - The type of the form values.
+ * @extends Omit<InputProps, "name" | "type">
+ * @extends PasswordVisibilityProps
+ */
 export interface PasswordInputProps<TFieldValues extends FieldValues>
   extends Omit<InputProps, "name" | "type">,
     PasswordVisibilityProps {
+  /**
+   * Props to be passed to the root `InputGroup` component.
+   * @type {GroupProps}
+   */
   rootProps?: GroupProps
+  /**
+   * An element to be placed at the start of the input.
+   * @type {ReactNode}
+   */
   startElement?: ReactNode
+  /**
+   * The name of the field in `react-hook-form`.
+   * @type {Path<TFieldValues>}
+   */
   name: Path<TFieldValues>
+  /**
+   * The errors object from `react-hook-form`.
+   * @type {FieldErrors<TFieldValues>}
+   */
   errors: FieldErrors<TFieldValues>
 }
 
+/**
+ * A password input field with a visibility toggle, designed for use with
+ * `react-hook-form`. It wraps the standard Input in a Field component to
+ * display validation errors.
+ *
+ * @template TFieldValues - The type of the form values, extending `FieldValues`.
+ * @param {PasswordInputProps<TFieldValues>} props - The props for the component, destructured.
+ * @param {React.Ref<HTMLInputElement>} ref - The ref forwarded to the underlying input element.
+ * @returns {React.ReactNode} The rendered password input component with a visibility toggle.
+ */
 export const PasswordInput = forwardRef(function PasswordInput<
   TFieldValues extends FieldValues,
 >(
-  props: PasswordInputProps<TFieldValues>,
-  ref: React.Ref<HTMLInputElement>,
-): React.ReactNode {
-  const {
+  {
     rootProps,
     defaultVisible,
     visible: visibleProp,
@@ -62,8 +113,9 @@ export const PasswordInput = forwardRef(function PasswordInput<
     name,
     errors,
     ...rest
-  } = props
-
+  }: PasswordInputProps<TFieldValues>,
+  ref: React.Ref<HTMLInputElement>,
+): React.ReactNode {
   const [visible, setVisible]: [boolean, (value: boolean) => void] =
     useControllableState({
       value: visibleProp,
@@ -108,9 +160,17 @@ export const PasswordInput = forwardRef(function PasswordInput<
   )
 })
 
+/**
+ * An internal IconButton used to toggle password visibility.
+ * It is not exported and is intended for use only within PasswordInput.
+ *
+ * @param {ButtonProps} props - The props for the component, destructured.
+ * @param {React.Ref<HTMLButtonElement>} ref - The ref forwarded to the underlying button element.
+ * @returns {React.ReactNode} The rendered IconButton component.
+ */
 const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
   function VisibilityTrigger(
-    props: ButtonProps,
+    { children, ...rest }: ButtonProps,
     ref: React.Ref<HTMLButtonElement>,
   ): React.ReactNode {
     return (
@@ -124,12 +184,13 @@ const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
         height="calc(100% - {spacing.2})"
         aria-label="Toggle password visibility"
         color="inherit"
-        {...props}
-      />
+        {...rest}
+      >
+        {children}
+      </IconButton>
     )
   },
 )
 
-// Set the display name for better debugging in React DevTools
 PasswordInput.displayName = "PasswordInput"
 VisibilityTrigger.displayName = "VisibilityTrigger"
