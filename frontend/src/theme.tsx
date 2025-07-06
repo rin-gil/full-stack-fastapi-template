@@ -1,8 +1,8 @@
 /**
- * @file Frontend theme configuration for Chakra UI.
- * @description This file defines the global CSS styles, design tokens (colors),
- * and component-specific style recipes (like for buttons) for the application.
- * It extends Chakra UI's defaultConfig to establish a custom design system.
+ * @file Defines the application's theme and design system.
+ * @description This file configures the global CSS, design tokens (e.g., colors),
+ * and component-specific style recipes for Chakra UI. It combines these elements
+ * to create and export the complete design system for the frontend.
  */
 
 // biome-ignore lint/style/useImportType: <explanation>
@@ -10,8 +10,11 @@ import { SystemContext, createSystem, defaultConfig } from "@chakra-ui/react"
 // Importing the 'recipe' for buttons
 import { buttonRecipe } from "./theme/button.recipe"
 
-// Move global CSS rules to a separate constant
-const globalStyles = {
+/**
+ * Global CSS rules applied to the entire application.
+ * @type {Record<string, any>}
+ */
+const globalStyles: Record<string, any> = {
   html: {
     fontSize: "16px",
   },
@@ -26,19 +29,29 @@ const globalStyles = {
   },
 }
 
-// Move color token definitions to a separate constant
-const colorTokens = {
+/**
+ * Custom color tokens for the application's theme.
+ * @type {Record<string, any>}
+ */
+const colorTokens: Record<string, any> = {
   ui: {
     main: { value: "#009688" },
   },
 }
 
-// Move the definitions of component 'recipes' to a separate constant
-const componentRecipes = {
+/**
+ * A collection of component-specific style recipes.
+ * @type {Record<string, any>}
+ */
+const componentRecipes: Record<string, any> = {
   button: buttonRecipe,
 }
 
-// Create and export a design system using Chakra UI
+/**
+ * The complete design system for the application, created with Chakra UI's `createSystem`.
+ * This object includes global styles, theme tokens, and component recipes.
+ * @type {SystemContext}
+ */
 export const system: SystemContext = createSystem(defaultConfig, {
   globalCss: globalStyles,
   theme: {
