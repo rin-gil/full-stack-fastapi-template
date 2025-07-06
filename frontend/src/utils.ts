@@ -1,6 +1,6 @@
 /**
  * @file Utility functions and constants for form validation and error handling.
- * This module provides reusable, framework-agnostic helpers.
+ * @description This module provides reusable, framework-agnostic helpers.
  */
 
 import type { ApiError } from "./client"
