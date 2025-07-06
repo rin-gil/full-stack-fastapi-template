@@ -1,6 +1,6 @@
 /**
  * @file Chakra UI Recipe for the Button component.
- * This file defines the base styles and available variants (e.g., 'ghost')
+ * @description This file defines the base styles and available variants (e.g., 'ghost')
  * for all Button components used throughout the application.
  * It centralizes button styling configuration, promoting consistency and maintainability.
  */
