@@ -1,5 +1,7 @@
 /**
  * @file Test setup file for Vitest.
+ * @description This file sets up the environment for testing, including:
+ * - Mocking the `window.matchMedia` object for OS color scheme detection.
  */
 
 import "@testing-library/jest-dom"

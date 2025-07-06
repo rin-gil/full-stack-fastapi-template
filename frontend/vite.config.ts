@@ -29,7 +29,6 @@ const viteConfig = defineConfig({
   plugins: [react(), TanStackRouterVite()],
   // Production build configuration
   build: {
-    // Minification of HTML, CSS, and JS to reduce file size in production builds.
     minify: true,
   },
 })
@@ -41,7 +40,14 @@ const vitestConfig = defineVitestConfig({
     environment: "jsdom",
     setupFiles: "./tests/setupTests.ts",
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
-    css: true,
+    // REFACTOR: Use the new, correct configuration key `server.deps.inline`
+    // as recommended by the Vitest deprecation warning. This resolves the
+    // "Could not parse CSS" errors by forcing Vitest to transform these libraries.
+    server: {
+      deps: {
+        inline: [/@chakra-ui\/.*/, /@emotion\/.*/],
+      },
+    },
     coverage: {
       ...configDefaults.coverage,
       provider: "v8",
