@@ -807,15 +807,12 @@ describe("ResetPassword Page Integration", (): void => {
     mockTrigger.mockResolvedValue(true)
     await user.click(submitButton)
 
-    await waitFor(
-      (): void => {
-        expect(mockMutate).toHaveBeenCalledWith({
-          new_password: "ValidPass123!",
-          token: "valid-token",
-        })
-        expect(mockShowApiErrorToast).toHaveBeenCalledWith(mockError)
-      },
-      { timeout: 3000 },
-    ) // Увеличиваем таймаут для асинхронных операций
+    await waitFor((): void => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        new_password: "ValidPass123!",
+        token: "valid-token",
+      })
+      expect(mockShowApiErrorToast).toHaveBeenCalledWith(mockError)
+    })
   })
 })
