@@ -26,7 +26,7 @@ import { ResetPassword } from "@/routes/reset-password"
 // Mocked authentication hook
 const mockShowSuccessToast: Mock = vi.fn()
 const mockShowApiErrorToast: Mock = vi.fn()
-vi.mock("@/hooks/useCustomToast", () => ({
+vi.mock("@/hooks/useCustomToast", (): object => ({
   __esModule: true,
   /**
    * Mock implementation of the useCustomToast hook.
@@ -39,7 +39,7 @@ vi.mock("@/hooks/useCustomToast", () => ({
 }))
 
 // Mock isLoggedIn
-vi.mock("@/hooks/useAuth", () => ({
+vi.mock("@/hooks/useAuth", (): object => ({
   __esModule: true,
   /**
    * Mock implementation of isLoggedIn.
@@ -54,37 +54,55 @@ const mockMutation: { mutate: Mock; isPending: boolean } = {
   mutate: mockMutate,
   isPending: false,
 }
-vi.mock("@tanstack/react-query", async (importOriginal): Promise<any> => {
-  const original: any = await importOriginal()
-  return {
-    ...original,
-    /**
-     * Mock for useMutation hook.
-     * @returns {object} Mocked mutation object with mutate function and isPending state.
-     */
-    useMutation: vi.fn().mockImplementation(({ onSuccess, onError }) => {
-      return {
-        ...mockMutation,
-        mutate: async (data: any) => {
-          try {
-            const result = await mockMutate(data)
-            onSuccess?.(result)
-            return result
-          } catch (error) {
-            onError?.(error)
+vi.mock(
+  "@tanstack/react-query",
+  async (
+    importOriginal: <T extends Record<string, any>>() => Promise<T>,
+  ): Promise<any> => {
+    const original: Record<string, any> = await importOriginal()
+    return {
+      ...original,
+      /**
+       * Mock for useMutation hook.
+       * @returns {object} Mocked mutation object with mutate function and isPending state.
+       */
+      useMutation: vi
+        .fn()
+        .mockImplementation(({ onSuccess, onError }: any): any => {
+          return {
+            ...mockMutation,
+            /**
+             * Asynchronously performs a mutation operation.
+             * @function
+             * @param {any} data - The data to be used in the mutation.
+             * @returns {Promise<any>} A promise that resolves with the result of the mutation.
+             * @throws Will call the onError callback if the mutation fails.
+             * Calls the onSuccess callback if the mutation is successful.
+             */
+            mutate: async (data: any): Promise<any> => {
+              try {
+                const result: any = await mockMutate(data)
+                onSuccess?.(result)
+                return result
+              } catch (error) {
+                onError?.(error)
+              }
+            },
           }
-        },
-      }
-    }),
-  }
-})
+        }),
+    }
+  },
+)
 
 // Mock TanStack Router components
 const mockNavigate: Mock = vi.fn()
 vi.mock(
   "@tanstack/react-router",
-  async (importOriginal): Promise<Record<string, any>> => {
-    const original = await importOriginal<Record<string, any>>()
+  async (
+    importOriginal: <T extends Record<string, any>>() => Promise<T>,
+  ): Promise<Record<string, any>> => {
+    const original: Record<string, any> =
+      await importOriginal<Record<string, any>>()
     return {
       ...original,
       /**
@@ -430,15 +448,23 @@ vi.mock("@/utils", async (importOriginal): Promise<any> => {
 
 // Mock react-hook-form
 const mockTrigger: Mock = vi.fn()
+/**
+ * Creates a mock implementation of the `useForm` hook.
+ *
+ * @param {Object.<string, string>} testValues - Initial values for the form.
+ * @param {Object.<string, { message?: string }>} [errors={}] - Initial errors for the form.
+ * @param {boolean} [isValid=true] - Whether the form is initially valid.
+ * @returns {Object} A mock implementation of the `useForm` hook.
+ */
 const createMockUseForm = (
   testValues: { [key: string]: string },
   errors: { [key: string]: { message?: string } } = {},
-  isValid = true,
-) => {
+  // biome-ignore lint/style/noInferrableTypes: Enforcing explicit types for clarity as per project style guide.
+  isValid: boolean = true,
+): object => {
   const formValues: { [key: string]: string } = {
     ...(testValues as Record<string, string>),
   }
-
   return {
     register: vi.fn((name: string) => ({
       name,
@@ -519,6 +545,8 @@ vi.mock("react-hook-form", async (importOriginal): Promise<any> => {
   }
 })
 
+// endregion
+
 describe("ResetPassword Page Integration", (): void => {
   let user: UserEvent
 
@@ -536,6 +564,7 @@ describe("ResetPassword Page Integration", (): void => {
     mockTrigger.mockReset()
   })
 
+  // region Tests
   it("should render the reset password form correctly", (): void => {
     vi.mocked(useForm).mockReturnValue(
       createMockUseForm({ new_password: "", confirm_password: "" }) as any,
@@ -815,4 +844,6 @@ describe("ResetPassword Page Integration", (): void => {
       expect(mockShowApiErrorToast).toHaveBeenCalledWith(mockError)
     })
   })
+
+  // endregion
 })
