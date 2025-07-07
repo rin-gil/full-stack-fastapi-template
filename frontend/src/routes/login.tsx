@@ -7,11 +7,7 @@
  */
 
 import { Container, Image, Input, Text } from "@chakra-ui/react"
-import {
-  Link as RouterLink,
-  createFileRoute,
-  redirect,
-} from "@tanstack/react-router"
+import { Link as RouterLink, createFileRoute, redirect } from "@tanstack/react-router"
 import type { JSX } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiLock, FiMail } from "react-icons/fi"
@@ -83,18 +79,8 @@ export function Login(): JSX.Element {
       gap={4}
       centerContent
     >
-      <Image
-        src={Logo}
-        alt="FastAPI logo"
-        height="auto"
-        maxW="2xs"
-        alignSelf="center"
-        mb={4}
-      />
-      <Field
-        invalid={!!errors.username || !!error}
-        errorText={errors.username?.message || error}
-      >
+      <Image src={Logo} alt="FastAPI logo" height="auto" maxW="2xs" alignSelf="center" mb={4} />
+      <Field invalid={!!errors.username || !!error} errorText={errors.username?.message || error}>
         <InputGroup w="100%" startElement={<FiMail />}>
           <Input
             id="username"

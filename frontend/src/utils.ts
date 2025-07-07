@@ -93,12 +93,7 @@ export const confirmPasswordRules = (
  * @returns {string} A user-friendly error message.
  */
 export const extractApiErrorMessage = (err: unknown): string => {
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    "body" in err &&
-    "status" in err
-  ) {
+  if (typeof err === "object" && err !== null && "body" in err && "status" in err) {
     const body = (err as ApiError).body as unknown
     if (typeof body === "object" && body !== null && "detail" in body) {
       const detail: unknown = (body as { detail: unknown }).detail

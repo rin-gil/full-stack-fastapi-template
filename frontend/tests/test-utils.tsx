@@ -18,9 +18,7 @@ import { CustomProvider } from "@/components/ui/provider"
  * @param {ReactNode} props.children - The React elements to be wrapped.
  * @returns {ReactElement} The children wrapped in `CustomProvider`.
  */
-const AllTheProviders = ({
-  children,
-}: { children: ReactNode }): ReactElement => {
+const AllTheProviders = ({ children }: { children: ReactNode }): ReactElement => {
   return <CustomProvider>{children}</CustomProvider>
 }
 
@@ -32,10 +30,7 @@ const AllTheProviders = ({
  * @param {Omit<RenderOptions, "wrapper">} [options] - Optional configuration for the render, excluding the `wrapper` property.
  * @returns {RenderResult} The result of rendering the UI, providing access to query functions.
  */
-const customRender = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, "wrapper">,
-): RenderResult =>
+const customRender = (ui: ReactElement, options?: Omit<RenderOptions, "wrapper">): RenderResult =>
   testingLibraryRender(ui, { wrapper: AllTheProviders, ...options })
 
 // Re-export all of `@testing-library/react` for convenience in test files.

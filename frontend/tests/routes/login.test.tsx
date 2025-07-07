@@ -99,17 +99,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
     Container: React.forwardRef<HTMLFormElement, any>(
       (props: any, ref: ForwardedRef<HTMLFormElement>): ReactElement => {
         // Destructure and ignore Chakra-specific layout props.
-        const {
-          as,
-          h,
-          maxW,
-          alignItems,
-          justifyContent,
-          gap,
-          centerContent,
-          children,
-          ...rest
-        } = props
+        const { as, h, maxW, alignItems, justifyContent, gap, centerContent, children, ...rest } = props
         return (
           <form {...rest} ref={ref}>
             {children}
@@ -124,11 +114,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @param {string} props.src - Image source.
      * @returns {ReactElement} A mocked image element.
      */
-    Image: ({
-      alt,
-      src,
-      ...props
-    }: { alt: string; src: string; [key: string]: any }): ReactElement => {
+    Image: ({ alt, src, ...props }: { alt: string; src: string; [key: string]: any }): ReactElement => {
       // Destructure and ignore Chakra-specific layout props.
       const { maxW, alignSelf, mb, height, ...rest } = props
       // biome-ignore lint/a11y/useAltText: <explanation>
@@ -141,9 +127,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @returns {ReactElement} A mocked input element.
      */
     Input: React.forwardRef<HTMLInputElement, any>(
-      (props: any, ref: ForwardedRef<any>): ReactElement => (
-        <input {...props} ref={ref} />
-      ),
+      (props: any, ref: ForwardedRef<any>): ReactElement => <input {...props} ref={ref} />,
     ),
     /**
      * Mock for Chakra `Text` component.
@@ -151,19 +135,14 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @param {ReactNode} props.children - Child elements.
      * @returns {ReactElement} A mocked paragraph element.
      */
-    Text: ({ children }: { children: ReactNode }): ReactElement => (
-      <p>{children}</p>
-    ),
+    Text: ({ children }: { children: ReactNode }): ReactElement => <p>{children}</p>,
     /**
      * Mock for Chakra `AbsoluteCenter` component.
      * @param {object} props - Component props.
      * @param {ReactNode} props.children - Child elements.
      * @returns {ReactElement} A mocked div.
      */
-    AbsoluteCenter: ({
-      children,
-      ...rest
-    }: { children: ReactNode; [key: string]: any }): ReactElement => (
+    AbsoluteCenter: ({ children, ...rest }: { children: ReactNode; [key: string]: any }): ReactElement => (
       <div {...rest}>{children}</div>
     ),
     /**
@@ -172,10 +151,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @param {ReactNode} props.children - Child elements.
      * @returns {ReactElement} A mocked span.
      */
-    Spinner: ({
-      children,
-      ...rest
-    }: { children: ReactNode; [key: string]: any }): ReactElement => (
+    Spinner: ({ children, ...rest }: { children: ReactNode; [key: string]: any }): ReactElement => (
       <span {...rest}>{children}</span>
     ),
     /**
@@ -184,10 +160,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @param {ReactNode} props.children - Child elements.
      * @returns {ReactElement} A mocked span.
      */
-    Span: ({
-      children,
-      ...rest
-    }: { children: ReactNode; [key: string]: any }): ReactElement => (
+    Span: ({ children, ...rest }: { children: ReactNode; [key: string]: any }): ReactElement => (
       <span {...rest}>{children}</span>
     ),
   }
@@ -239,9 +212,7 @@ vi.mock("@/components/ui/password-input", () => ({
     return (
       <>
         <input type="password" placeholder="Password" {...rest} ref={ref} />
-        {errors?.password?.message && (
-          <span role="alert">{errors.password.message}</span>
-        )}
+        {errors?.password?.message && <span role="alert">{errors.password.message}</span>}
       </>
     )
   }),
@@ -314,9 +285,7 @@ describe("Login Page Integration", (): void => {
     expect(screen.getByPlaceholderText("Password")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Log In" })).toBeInTheDocument()
     // Verify the presence of navigation links.
-    expect(
-      screen.getByRole("link", { name: "Forgot Password?" }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Forgot Password?" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Sign Up" })).toBeInTheDocument()
   })
 
@@ -327,9 +296,7 @@ describe("Login Page Integration", (): void => {
     // Expect validation messages to appear asynchronously.
     expect(await screen.findByText("Username is required")).toBeInTheDocument()
     // The exact error message for password validation from `passwordRules` is checked.
-    expect(
-      await screen.findByText(passwordRules().required as string),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(passwordRules().required as string)).toBeInTheDocument()
     // Confirm that login mutation was not attempted due to validation errors.
     expect(mockLoginMutation.mutateAsync).not.toHaveBeenCalled()
   })
@@ -338,10 +305,7 @@ describe("Login Page Integration", (): void => {
     const user: UserEvent = userEvent.setup()
     render(<Login />)
     await user.type(screen.getByPlaceholderText("Email"), "test@example.com")
-    await user.type(
-      screen.getByPlaceholderText("Password"),
-      "ValidPassword123!",
-    )
+    await user.type(screen.getByPlaceholderText("Password"), "ValidPassword123!")
     await user.click(screen.getByRole("button", { name: "Log In" }))
     // Wait for the asynchronous mutation to be called with correct data.
     await waitFor((): void => {
@@ -356,9 +320,7 @@ describe("Login Page Integration", (): void => {
 
   it("should disable button while submitting", async (): Promise<void> => {
     // Mock the async mutation to never resolve, simulating a long-running request.
-    mockLoginMutation.mutateAsync.mockImplementation(
-      (): Promise<void> => new Promise((): void => {}),
-    )
+    mockLoginMutation.mutateAsync.mockImplementation((): Promise<void> => new Promise((): void => {}))
     const user: UserEvent = userEvent.setup()
     render(<Login />)
     const submitButton: HTMLElement = screen.getByRole("button", {
@@ -366,10 +328,7 @@ describe("Login Page Integration", (): void => {
     })
     // Fill in valid credentials and submit the form.
     await user.type(screen.getByPlaceholderText("Email"), "test@example.com")
-    await user.type(
-      screen.getByPlaceholderText("Password"),
-      "ValidPassword123!",
-    )
+    await user.type(screen.getByPlaceholderText("Password"), "ValidPassword123!")
     await user.click(submitButton)
     // Wait for the button to become disabled, confirming the `loading` state is applied.
     await waitFor((): void => {

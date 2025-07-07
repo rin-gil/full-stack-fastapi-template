@@ -7,12 +7,7 @@
 
 import type { BoxProps, InputElementProps } from "@chakra-ui/react"
 import { Group, InputElement } from "@chakra-ui/react"
-import type {
-  ForwardRefExoticComponent,
-  ForwardedRef,
-  ReactElement,
-  ReactNode,
-} from "react"
+import type { ForwardRefExoticComponent, ForwardedRef, ReactElement, ReactNode } from "react"
 import { Children, cloneElement, forwardRef } from "react"
 
 /**
@@ -59,16 +54,9 @@ export interface InputGroupProps extends BoxProps {
  * @param {ForwardedRef<HTMLDivElement>} ref - The ref forwarded to the underlying Group element.
  * @returns {ReactNode} The rendered InputGroup component.
  */
-export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
-  forwardRef<HTMLDivElement, InputGroupProps>(function InputGroup(
-    {
-      startElement,
-      startElementProps,
-      endElement,
-      endElementProps,
-      children,
-      ...rest
-    }: InputGroupProps,
+export const InputGroup: ForwardRefExoticComponent<InputGroupProps> = forwardRef<HTMLDivElement, InputGroupProps>(
+  function InputGroup(
+    { startElement, startElementProps, endElement, endElementProps, children, ...rest }: InputGroupProps,
     ref: ForwardedRef<HTMLDivElement>,
   ): ReactNode {
     const child: ReactElement = Children.only(children)
@@ -99,6 +87,7 @@ export const InputGroup: ForwardRefExoticComponent<InputGroupProps> =
         )}
       </Group>
     )
-  })
+  },
+)
 
 InputGroup.displayName = "InputGroup"

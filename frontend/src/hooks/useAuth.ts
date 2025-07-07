@@ -48,11 +48,7 @@ export interface UseAuthReturn {
    * Mutation for user login.
    * @type {UseMutationResult<Token, ApiError, LoginLoginRouterLoginAccessTokenData>}
    */
-  loginMutation: UseMutationResult<
-    Token,
-    ApiError,
-    LoginLoginRouterLoginAccessTokenData
-  >
+  loginMutation: UseMutationResult<Token, ApiError, LoginLoginRouterLoginAccessTokenData>
   /**
    * Function to log out the current user.
    * @returns {void}
@@ -100,10 +96,7 @@ const useAuth = (): UseAuthReturn => {
    * The query is enabled only if an access token is present.
    * @type {UseQueryResult<UserPublic | null, ApiError>}
    */
-  const {
-    data: user,
-    isLoading: isUserLoading,
-  }: UseQueryResult<UserPublic | null, ApiError> = useQuery<
+  const { data: user, isLoading: isUserLoading }: UseQueryResult<UserPublic | null, ApiError> = useQuery<
     UserPublic | null,
     ApiError
   >({
@@ -116,52 +109,54 @@ const useAuth = (): UseAuthReturn => {
    * Mutation for user registration.
    * @type {UseMutationResult<UserPublic, ApiError, UserRegister>}
    */
-  const signUpMutation: UseMutationResult<UserPublic, ApiError, UserRegister> =
-    useMutation<UserPublic, ApiError, UserRegister>({
-      /**
-       * The mutation function to register a new user.
-       * @param {UserRegister} data - The registration form data.
-       * @returns {Promise<UserPublic>} The newly registered user's data.
-       */
-      mutationFn: (data: UserRegister): Promise<UserPublic> =>
-        usersUsersRouterRegisterUser({ requestBody: data }),
-      /**
-       * Success handler for the signUp mutation.
-       * Navigates the user to the login page upon successful registration.
-       * @returns {void}
-       */
-      onSuccess: (): void => {
-        void navigate({ to: "/login" })
-      },
-      /**
-       * Error handler for the signUp mutation.
-       * Shows a toast notification with the error message.
-       * @param {ApiError} err - The error object returned by the API.
-       * @returns {void}
-       */
-      onError: (err: ApiError): void => {
-        showApiErrorToast(err)
-      },
-      /**
-       * When the signUp mutation has finished (regardless of success or failure),
-       * invalidates the "users" query to trigger a re-fetch of the user list.
-       * This ensures that the newly registered user is added to the list.
-       * @returns {void}
-       */
-      onSettled: (): void => {
-        void queryClient.invalidateQueries({ queryKey: ["users"] })
-      },
-    })
+  const signUpMutation: UseMutationResult<UserPublic, ApiError, UserRegister> = useMutation<
+    UserPublic,
+    ApiError,
+    UserRegister
+  >({
+    /**
+     * The mutation function to register a new user.
+     * @param {UserRegister} data - The registration form data.
+     * @returns {Promise<UserPublic>} The newly registered user's data.
+     */
+    mutationFn: (data: UserRegister): Promise<UserPublic> => usersUsersRouterRegisterUser({ requestBody: data }),
+    /**
+     * Success handler for the signUp mutation.
+     * Navigates the user to the login page upon successful registration.
+     * @returns {void}
+     */
+    onSuccess: (): void => {
+      void navigate({ to: "/login" })
+    },
+    /**
+     * Error handler for the signUp mutation.
+     * Shows a toast notification with the error message.
+     * @param {ApiError} err - The error object returned by the API.
+     * @returns {void}
+     */
+    onError: (err: ApiError): void => {
+      showApiErrorToast(err)
+    },
+    /**
+     * When the signUp mutation has finished (regardless of success or failure),
+     * invalidates the "users" query to trigger a re-fetch of the user list.
+     * This ensures that the newly registered user is added to the list.
+     * @returns {void}
+     */
+    onSettled: (): void => {
+      void queryClient.invalidateQueries({ queryKey: ["users"] })
+    },
+  })
 
   /**
    * Mutation for user login.
    * @type {UseMutationResult<Token, ApiError, LoginLoginRouterLoginAccessTokenData>}
    */
-  const loginMutation: UseMutationResult<
+  const loginMutation: UseMutationResult<Token, ApiError, LoginLoginRouterLoginAccessTokenData> = useMutation<
     Token,
     ApiError,
     LoginLoginRouterLoginAccessTokenData
-  > = useMutation<Token, ApiError, LoginLoginRouterLoginAccessTokenData>({
+  >({
     /**
      * The mutation function to log in a user and obtain an access token.
      * @param {LoginLoginRouterLoginAccessTokenData} data - The form data for login (username and password).

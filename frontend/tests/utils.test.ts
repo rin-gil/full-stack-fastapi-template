@@ -3,13 +3,7 @@
  */
 
 import type { ValidationRules } from "@/utils"
-import {
-  confirmPasswordRules,
-  emailPattern,
-  extractApiErrorMessage,
-  namePattern,
-  passwordRules,
-} from "@/utils"
+import { confirmPasswordRules, emailPattern, extractApiErrorMessage, namePattern, passwordRules } from "@/utils"
 import { type Mock, describe, expect, it, vi } from "vitest"
 
 // Test suite for the entire utils.ts file
@@ -36,24 +30,21 @@ describe("utils.ts", (): void => {
     it("should return true when passwords match", (): void => {
       getValuesMock.mockReturnValue({ password: "password123" })
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined =
-        rules.validate?.("password123")
+      const result: string | boolean | undefined = rules.validate?.("password123")
       expect(result).toBe(true)
     })
 
     it("should return an error message when passwords do not match", (): void => {
       getValuesMock.mockReturnValue({ password: "password123" })
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined =
-        rules.validate?.("wrongpassword")
+      const result: string | boolean | undefined = rules.validate?.("wrongpassword")
       expect(result).toBe("The passwords do not match")
     })
 
     it("should correctly use new_password if password field is not present", (): void => {
       getValuesMock.mockReturnValue({ new_password: "newpassword123" })
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined =
-        rules.validate?.("newpassword123")
+      const result: string | boolean | undefined = rules.validate?.("newpassword123")
       expect(result).toBe(true)
     })
 
@@ -116,13 +107,7 @@ describe("utils.ts", (): void => {
     })
 
     it("should not match invalid names", (): void => {
-      const invalidNames: string[] = [
-        " admin",
-        "admin ",
-        "admin2",
-        "Admin-",
-        "Admin'",
-      ]
+      const invalidNames: string[] = [" admin", "admin ", "admin2", "Admin-", "Admin'"]
       for (const name of invalidNames) {
         expect(name).not.toMatch(namePattern.value)
       }
@@ -132,22 +117,14 @@ describe("utils.ts", (): void => {
   // Tests for emailPattern
   describe("emailPattern", (): void => {
     it("should match valid email addresses", (): void => {
-      const validEmails: string[] = [
-        "test@example.com",
-        "test.name@example.co.uk",
-      ]
+      const validEmails: string[] = ["test@example.com", "test.name@example.co.uk"]
       for (const email of validEmails) {
         expect(email).toMatch(emailPattern.value)
       }
     })
 
     it("should not match invalid email addresses", (): void => {
-      const invalidEmails: string[] = [
-        "test",
-        "test@",
-        "test@example",
-        "test@.com",
-      ]
+      const invalidEmails: string[] = ["test", "test@", "test@example", "test@.com"]
       for (const email of invalidEmails) {
         expect(email).not.toMatch(emailPattern.value)
       }

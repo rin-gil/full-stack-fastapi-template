@@ -68,12 +68,11 @@ vi.mock("@/components/ui/input-group", () => ({
 vi.mock("@chakra-ui/react", async (importOriginal) => {
   const original = await importOriginal<typeof import("@chakra-ui/react")>()
 
-  const MockChakraInput = React.forwardRef<
-    HTMLInputElement,
-    React.InputHTMLAttributes<HTMLInputElement>
-  >(function MockChakraInput(props, ref): ReactElement {
-    return <input placeholder="password-input" {...props} ref={ref} />
-  })
+  const MockChakraInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+    function MockChakraInput(props, ref): ReactElement {
+      return <input placeholder="password-input" {...props} ref={ref} />
+    },
+  )
   MockChakraInput.displayName = "MockChakraInput"
 
   /**
@@ -122,8 +121,7 @@ describe("PasswordInput", () => {
     const user = userEvent.setup()
     render(<PasswordInput name="password" errors={{}} />)
 
-    const input =
-      screen.getByPlaceholderText<HTMLInputElement>("password-input")
+    const input = screen.getByPlaceholderText<HTMLInputElement>("password-input")
     const toggleButton = screen.getByRole("button", {
       name: "Toggle password visibility",
     })

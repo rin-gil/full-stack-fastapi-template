@@ -5,12 +5,7 @@
  */
 
 import type { ButtonProps as ChakraButtonProps } from "@chakra-ui/react"
-import {
-  AbsoluteCenter,
-  Button as ChakraButton,
-  Span,
-  Spinner,
-} from "@chakra-ui/react"
+import { AbsoluteCenter, Button as ChakraButton, Span, Spinner } from "@chakra-ui/react"
 import * as React from "react"
 
 /**
@@ -50,47 +45,45 @@ export interface ButtonProps extends ChakraButtonProps, ButtonLoadingProps {}
  * underlying button element.
  * @returns {React.ReactElement} The rendered Button component.
  */
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  function Button(
-    { loading, disabled, loadingText, children, ...rest }: ButtonProps,
-    ref: React.Ref<HTMLButtonElement>,
-  ) {
-    /**
-     * Renders the content of the button based on the loading state.
-     * @returns {React.ReactNode} The content to be rendered inside the button.
-     */
-    const renderContent = (): React.ReactNode => {
-      if (!loading) {
-        return children
-      }
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { loading, disabled, loadingText, children, ...rest }: ButtonProps,
+  ref: React.Ref<HTMLButtonElement>,
+) {
+  /**
+   * Renders the content of the button based on the loading state.
+   * @returns {React.ReactNode} The content to be rendered inside the button.
+   */
+  const renderContent = (): React.ReactNode => {
+    if (!loading) {
+      return children
+    }
 
-      if (loadingText) {
-        return (
-          <>
-            <Spinner size="inherit" color="inherit" mr={2} />
-            {loadingText}
-          </>
-        )
-      }
-
+    if (loadingText) {
       return (
         <>
-          {/* Spinner is absolutely centered */}
-          <AbsoluteCenter display="inline-flex">
-            <Spinner size="inherit" color="inherit" />
-          </AbsoluteCenter>
-          {/* The original children are rendered transparently to maintain button width */}
-          <Span opacity={0}>{children}</Span>
+          <Spinner size="inherit" color="inherit" mr={2} />
+          {loadingText}
         </>
       )
     }
 
     return (
-      <ChakraButton disabled={loading || disabled} ref={ref} {...rest}>
-        {renderContent()}
-      </ChakraButton>
+      <>
+        {/* Spinner is absolutely centered */}
+        <AbsoluteCenter display="inline-flex">
+          <Spinner size="inherit" color="inherit" />
+        </AbsoluteCenter>
+        {/* The original children are rendered transparently to maintain button width */}
+        <Span opacity={0}>{children}</Span>
+      </>
     )
-  },
-)
+  }
+
+  return (
+    <ChakraButton disabled={loading || disabled} ref={ref} {...rest}>
+      {renderContent()}
+    </ChakraButton>
+  )
+})
 
 Button.displayName = "Button"

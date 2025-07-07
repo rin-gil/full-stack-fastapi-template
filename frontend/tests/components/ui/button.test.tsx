@@ -23,34 +23,31 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
   /**
    * Mocks the core Chakra Button as a native HTML button.
    */
-  const MockChakraButton = React.forwardRef<
-    HTMLButtonElement,
-    ButtonHTMLAttributes<HTMLButtonElement>
-  >(function MockChakraButton(props, ref): ReactElement {
-    return <button ref={ref} {...props} />
-  })
+  const MockChakraButton = React.forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
+    function MockChakraButton(props, ref): ReactElement {
+      return <button ref={ref} {...props} />
+    },
+  )
   MockChakraButton.displayName = "MockChakraButton"
 
   /**
    * Mocks the Spinner component as a simple span for easy identification.
    */
-  const MockSpinner = (
-    props: HTMLAttributes<HTMLSpanElement>,
-  ): ReactElement => <span data-testid="mock-spinner" {...props} />
+  const MockSpinner = (props: HTMLAttributes<HTMLSpanElement>): ReactElement => (
+    <span data-testid="mock-spinner" {...props} />
+  )
 
   /**
    * Mocks the Span component to check for opacity changes.
    */
-  const MockSpan = (props: HTMLAttributes<HTMLSpanElement>): ReactElement => (
-    <span data-testid="mock-span" {...props} />
-  )
+  const MockSpan = (props: HTMLAttributes<HTMLSpanElement>): ReactElement => <span data-testid="mock-span" {...props} />
 
   /**
    * Mocks the AbsoluteCenter as a simple div.
    */
-  const MockAbsoluteCenter = (
-    props: HTMLAttributes<HTMLDivElement>,
-  ): ReactElement => <div data-testid="mock-absolute-center" {...props} />
+  const MockAbsoluteCenter = (props: HTMLAttributes<HTMLDivElement>): ReactElement => (
+    <div data-testid="mock-absolute-center" {...props} />
+  )
 
   return {
     ...original,

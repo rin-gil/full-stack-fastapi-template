@@ -13,18 +13,8 @@ import type { PointerEvent, ReactNode, RefObject } from "react"
 import { forwardRef, useRef } from "react"
 
 import type { ButtonProps, GroupProps, InputProps } from "@chakra-ui/react"
-import {
-  IconButton,
-  Input,
-  mergeRefs,
-  useControllableState,
-} from "@chakra-ui/react"
-import type {
-  FieldError,
-  FieldErrors,
-  FieldValues,
-  Path,
-} from "react-hook-form"
+import { IconButton, Input, mergeRefs, useControllableState } from "@chakra-ui/react"
+import type { FieldError, FieldErrors, FieldValues, Path } from "react-hook-form"
 import { FiEye, FiEyeOff } from "react-icons/fi"
 
 import { Field } from "./field"
@@ -100,9 +90,7 @@ export interface PasswordInputProps<TFieldValues extends FieldValues>
  * @param {React.Ref<HTMLInputElement>} ref - The ref forwarded to the underlying input element.
  * @returns {React.ReactNode} The rendered password input component with a visibility toggle.
  */
-export const PasswordInput = forwardRef(function PasswordInput<
-  TFieldValues extends FieldValues,
->(
+export const PasswordInput = forwardRef(function PasswordInput<TFieldValues extends FieldValues>(
   {
     rootProps,
     defaultVisible,
@@ -116,18 +104,15 @@ export const PasswordInput = forwardRef(function PasswordInput<
   }: PasswordInputProps<TFieldValues>,
   ref: React.Ref<HTMLInputElement>,
 ): React.ReactNode {
-  const [visible, setVisible]: [boolean, (value: boolean) => void] =
-    useControllableState({
-      value: visibleProp,
-      defaultValue: defaultVisible || false,
-      onChange: onVisibleChange,
-    })
+  const [visible, setVisible]: [boolean, (value: boolean) => void] = useControllableState({
+    value: visibleProp,
+    defaultValue: defaultVisible || false,
+    onChange: onVisibleChange,
+  })
 
   const inputRef: RefObject<HTMLInputElement> = useRef<HTMLInputElement>(null)
 
-  const fieldError: FieldError | undefined = errors[name] as
-    | FieldError
-    | undefined
+  const fieldError: FieldError | undefined = errors[name] as FieldError | undefined
 
   return (
     <Field invalid={!!fieldError} errorText={fieldError?.message as ReactNode}>
@@ -149,12 +134,7 @@ export const PasswordInput = forwardRef(function PasswordInput<
         }
         {...rootProps}
       >
-        <Input
-          {...rest}
-          name={name}
-          ref={mergeRefs(ref, inputRef)}
-          type={visible ? "text" : "password"}
-        />
+        <Input {...rest} name={name} ref={mergeRefs(ref, inputRef)} type={visible ? "text" : "password"} />
       </InputGroup>
     </Field>
   )
@@ -168,29 +148,27 @@ export const PasswordInput = forwardRef(function PasswordInput<
  * @param {React.Ref<HTMLButtonElement>} ref - The ref forwarded to the underlying button element.
  * @returns {React.ReactNode} The rendered IconButton component.
  */
-const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
-  function VisibilityTrigger(
-    { children, ...rest }: ButtonProps,
-    ref: React.Ref<HTMLButtonElement>,
-  ): React.ReactNode {
-    return (
-      <IconButton
-        tabIndex={-1}
-        ref={ref}
-        me="-2"
-        aspectRatio="square"
-        size="sm"
-        variant="ghost"
-        height="calc(100% - {spacing.2})"
-        aria-label="Toggle password visibility"
-        color="inherit"
-        {...rest}
-      >
-        {children}
-      </IconButton>
-    )
-  },
-)
+const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(function VisibilityTrigger(
+  { children, ...rest }: ButtonProps,
+  ref: React.Ref<HTMLButtonElement>,
+): React.ReactNode {
+  return (
+    <IconButton
+      tabIndex={-1}
+      ref={ref}
+      me="-2"
+      aspectRatio="square"
+      size="sm"
+      variant="ghost"
+      height="calc(100% - {spacing.2})"
+      aria-label="Toggle password visibility"
+      color="inherit"
+      {...rest}
+    >
+      {children}
+    </IconButton>
+  )
+})
 
 PasswordInput.displayName = "PasswordInput"
 VisibilityTrigger.displayName = "VisibilityTrigger"

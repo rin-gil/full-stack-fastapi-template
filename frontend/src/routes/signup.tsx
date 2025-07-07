@@ -7,11 +7,7 @@
  */
 
 import { Container, Flex, Image, Input, Text } from "@chakra-ui/react"
-import {
-  Link as RouterLink,
-  createFileRoute,
-  redirect,
-} from "@tanstack/react-router"
+import { Link as RouterLink, createFileRoute, redirect } from "@tanstack/react-router"
 import type { JSX } from "react"
 import type { SubmitHandler } from "react-hook-form"
 import { useForm } from "react-hook-form"
@@ -23,12 +19,7 @@ import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
-import {
-  confirmPasswordRules,
-  emailPattern,
-  namePattern,
-  passwordRules,
-} from "@/utils"
+import { confirmPasswordRules, emailPattern, namePattern, passwordRules } from "@/utils"
 import Logo from "/assets/images/fastapi-logo.svg"
 
 /**
@@ -75,9 +66,7 @@ export function SignUp(): JSX.Element {
    * @param {UserRegisterForm} data - The form data submitted by the user, including `confirm_password`.
    * @returns {void}
    */
-  const onSubmit: SubmitHandler<UserRegisterForm> = async (
-    data: UserRegisterForm,
-  ): Promise<void> => {
+  const onSubmit: SubmitHandler<UserRegisterForm> = async (data: UserRegisterForm): Promise<void> => {
     if (isSubmitting) {
       // Prevents repeated calls if the form is already in the process of being sent.
       return
@@ -100,18 +89,8 @@ export function SignUp(): JSX.Element {
           gap={4}
           centerContent
         >
-          <Image
-            src={Logo}
-            alt="FastAPI logo"
-            height="auto"
-            maxW="2xs"
-            alignSelf="center"
-            mb={4}
-          />
-          <Field
-            invalid={!!errors.full_name}
-            errorText={errors.full_name?.message}
-          >
+          <Image src={Logo} alt="FastAPI logo" height="auto" maxW="2xs" alignSelf="center" mb={4} />
+          <Field invalid={!!errors.full_name} errorText={errors.full_name?.message}>
             <InputGroup w="100%" startElement={<FiUser />}>
               <Input
                 id="full_name"

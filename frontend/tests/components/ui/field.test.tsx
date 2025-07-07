@@ -31,16 +31,15 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
    * @param {React.Ref<HTMLDivElement>} ref - Forwarded ref.
    * @returns {ReactElement} A mocked div.
    */
-  const MockFieldRoot = React.forwardRef<
-    HTMLDivElement,
-    { children: ReactNode; "data-testid"?: string }
-  >(function MockFieldRoot(props, ref): ReactElement {
-    return (
-      <div ref={ref} data-testid={props["data-testid"]}>
-        {props.children}
-      </div>
-    )
-  })
+  const MockFieldRoot = React.forwardRef<HTMLDivElement, { children: ReactNode; "data-testid"?: string }>(
+    function MockFieldRoot(props, ref): ReactElement {
+      return (
+        <div ref={ref} data-testid={props["data-testid"]}>
+          {props.children}
+        </div>
+      )
+    },
+  )
   MockFieldRoot.displayName = "MockFieldRoot"
 
   // noinspection JSUnusedGlobalSymbols
@@ -53,9 +52,7 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
        * @param {{children: ReactNode}} props - The component props.
        * @returns {ReactElement} A mocked label.
        */
-      Label: ({ children }: { children: ReactNode }): ReactElement => (
-        <label htmlFor="test-id">{children}</label>
-      ),
+      Label: ({ children }: { children: ReactNode }): ReactElement => <label htmlFor="test-id">{children}</label>,
       /**
        * Mock for ChakraField.RequiredIndicator.
        * @param {{fallback?: ReactNode}} props - The component props.
@@ -119,13 +116,7 @@ describe("Field", (): void => {
   })
 
   it("should render both helper and error text if both are provided", (): void => {
-    render(
-      <Field
-        helperText="This is a helper"
-        errorText="This is an error"
-        invalid
-      />,
-    )
+    render(<Field helperText="This is a helper" errorText="This is an error" invalid />)
     expect(screen.getByText("This is a helper")).toBeInTheDocument()
     expect(screen.getByText("This is an error")).toBeInTheDocument()
   })
@@ -154,8 +145,7 @@ describe("Field", (): void => {
   })
 
   it("should forward the ref to the root element", (): void => {
-    const ref: React.RefObject<HTMLDivElement> =
-      React.createRef<HTMLDivElement>()
+    const ref: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>()
     render(<Field ref={ref} />)
     expect(ref.current).toBeInstanceOf(HTMLDivElement)
   })

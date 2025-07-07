@@ -107,17 +107,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      */
     Container: React.forwardRef<HTMLFormElement, any>(
       (
-        {
-          as,
-          h,
-          maxW,
-          alignItems,
-          justifyContent,
-          gap,
-          centerContent,
-          children,
-          ...rest
-        },
+        { as, h, maxW, alignItems, justifyContent, gap, centerContent, children, ...rest },
         ref: ForwardedRef<HTMLFormElement>,
       ): ReactElement => (
         <form {...rest} ref={ref}>
@@ -134,13 +124,7 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @param rest - Additional props for the flex container.
      * @returns {ReactElement} A mocked div element.
      */
-    Flex: ({
-      children,
-      flexDir,
-      justify,
-      h,
-      ...rest
-    }: { children: ReactNode; [key: string]: any }): ReactElement => (
+    Flex: ({ children, flexDir, justify, h, ...rest }: { children: ReactNode; [key: string]: any }): ReactElement => (
       <div {...rest}>{children}</div>
     ),
     /**
@@ -173,18 +157,14 @@ vi.mock("@chakra-ui/react", async (importOriginal): Promise<any> => {
      * @returns {ReactElement} A mocked input element.
      */
     Input: React.forwardRef<HTMLInputElement, any>(
-      (props: any, ref: ForwardedRef<any>): ReactElement => (
-        <input {...props} ref={ref} />
-      ),
+      (props: any, ref: ForwardedRef<any>): ReactElement => <input {...props} ref={ref} />,
     ),
     /**
      * Mock for Chakra Text component.
      * @param children - The content of the text.
      * @returns {ReactElement} A mocked paragraph element.
      */
-    Text: ({ children }: { children: ReactNode }): ReactElement => (
-      <p>{children}</p>
-    ),
+    Text: ({ children }: { children: ReactNode }): ReactElement => <p>{children}</p>,
   }
 })
 
@@ -239,9 +219,7 @@ vi.mock("@/components/ui/password-input", () => ({
     return (
       <>
         <input type="password" name={name} {...rest} ref={ref} />
-        {errors?.[name]?.message && (
-          <span role="alert">{errors[name].message}</span>
-        )}
+        {errors?.[name]?.message && <span role="alert">{errors[name].message}</span>}
       </>
     )
   }),
@@ -327,9 +305,7 @@ describe("SignUp Page Integration", (): void => {
       expect(screen.getByText("Full Name is required")).toBeInTheDocument()
       expect(screen.getByText("Email is required")).toBeInTheDocument()
       expect(screen.getByText("Password is required")).toBeInTheDocument()
-      expect(
-        screen.getByText("Password confirmation is required"),
-      ).toBeInTheDocument()
+      expect(screen.getByText("Password confirmation is required")).toBeInTheDocument()
     })
     expect(mockSignUpMutation.mutateAsync).not.toHaveBeenCalled()
   })
@@ -362,9 +338,7 @@ describe("SignUp Page Integration", (): void => {
     fireEvent.change(passwordInput, { target: { value: "short" } })
     fireEvent.blur(passwordInput)
     await waitFor((): void => {
-      expect(
-        screen.getByText("Password must be at least 8 characters"),
-      ).toBeInTheDocument()
+      expect(screen.getByText("Password must be at least 8 characters")).toBeInTheDocument()
     })
     expect(mockSignUpMutation.mutateAsync).not.toHaveBeenCalled()
   })
@@ -372,8 +346,7 @@ describe("SignUp Page Integration", (): void => {
   it("should display validation error for mismatched passwords", async (): Promise<void> => {
     render(<SignUp />)
     const passwordInput: HTMLElement = screen.getByPlaceholderText("Password")
-    const confirmPasswordInput: HTMLElement =
-      screen.getByPlaceholderText("Confirm Password")
+    const confirmPasswordInput: HTMLElement = screen.getByPlaceholderText("Confirm Password")
     fireEvent.change(passwordInput, { target: { value: "ValidPass123!" } })
     fireEvent.change(confirmPasswordInput, {
       target: { value: "MismatchPass123!" },
@@ -390,8 +363,7 @@ describe("SignUp Page Integration", (): void => {
     const fullNameInput: HTMLElement = screen.getByPlaceholderText("Full Name")
     const emailInput: HTMLElement = screen.getByPlaceholderText("Email")
     const passwordInput: HTMLElement = screen.getByPlaceholderText("Password")
-    const confirmPasswordInput: HTMLElement =
-      screen.getByPlaceholderText("Confirm Password")
+    const confirmPasswordInput: HTMLElement = screen.getByPlaceholderText("Confirm Password")
     fireEvent.change(fullNameInput, { target: { value: "John Doe" } })
     fireEvent.change(emailInput, { target: { value: "test@example.com" } })
     fireEvent.change(passwordInput, { target: { value: "ValidPass123!" } })
@@ -409,9 +381,7 @@ describe("SignUp Page Integration", (): void => {
   })
 
   it("should disable button while submitting", async (): Promise<void> => {
-    mockSignUpMutation.mutateAsync.mockImplementation(
-      (): Promise<void> => new Promise((): void => {}),
-    )
+    mockSignUpMutation.mutateAsync.mockImplementation((): Promise<void> => new Promise((): void => {}))
     render(<SignUp />)
     const submitButton: HTMLElement = screen.getByRole("button", {
       name: "Sign Up",
@@ -419,8 +389,7 @@ describe("SignUp Page Integration", (): void => {
     const fullNameInput: HTMLElement = screen.getByPlaceholderText("Full Name")
     const emailInput: HTMLElement = screen.getByPlaceholderText("Email")
     const passwordInput: HTMLElement = screen.getByPlaceholderText("Password")
-    const confirmPasswordInput: HTMLElement =
-      screen.getByPlaceholderText("Confirm Password")
+    const confirmPasswordInput: HTMLElement = screen.getByPlaceholderText("Confirm Password")
     fireEvent.change(fullNameInput, { target: { value: "John Doe" } })
     fireEvent.change(emailInput, { target: { value: "test@example.com" } })
     fireEvent.change(passwordInput, { target: { value: "ValidPass123!" } })

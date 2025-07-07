@@ -20,17 +20,10 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
     ...original,
     // Mocking the Group component to be a simple div
     Group: React.forwardRef<HTMLDivElement, { children: ReactNode }>(
-      (props, ref): ReactElement => (
-        <div ref={ref} data-testid="mock-group" {...props} />
-      ),
+      (props, ref): ReactElement => <div ref={ref} data-testid="mock-group" {...props} />,
     ),
     // Mocking the InputElement to be a simple span
-    InputElement: ({
-      children,
-      ...props
-    }: { children: ReactNode }): ReactElement => (
-      <span {...props}>{children}</span>
-    ),
+    InputElement: ({ children, ...props }: { children: ReactNode }): ReactElement => <span {...props}>{children}</span>,
   }
 })
 
@@ -42,10 +35,7 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
  * @param {React.Ref<HTMLInputElement>} ref - The ref forwarded to the input element.
  * @returns {ReactElement} The rendered mock input element.
  */
-const MockInput = React.forwardRef<
-  HTMLInputElement,
-  { ps?: string; pe?: string }
->(function MockInput(
+const MockInput = React.forwardRef<HTMLInputElement, { ps?: string; pe?: string }>(function MockInput(
   props: { ps?: string; pe?: string },
   ref: React.Ref<HTMLInputElement>,
 ): ReactElement {

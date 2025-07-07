@@ -38,36 +38,23 @@ export interface FieldProps extends Omit<ChakraField.RootProps, "label"> {
  * @param {React.Ref<HTMLDivElement>} ref - The ref to forward to the underlying ChakraField.Root element.
  * @returns {React.ReactElement} The rendered Field component.
  */
-export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
-  function Field(
-    {
-      label,
-      children,
-      helperText,
-      errorText,
-      optionalText,
-      ...rest
-    }: FieldProps,
-    ref: React.Ref<HTMLDivElement>,
-  ): React.ReactElement {
-    return (
-      <ChakraField.Root ref={ref} {...rest}>
-        {label && (
-          <ChakraField.Label>
-            {label}
-            <ChakraField.RequiredIndicator fallback={optionalText} />
-          </ChakraField.Label>
-        )}
-        {children}
-        {helperText && (
-          <ChakraField.HelperText>{helperText}</ChakraField.HelperText>
-        )}
-        {errorText && (
-          <ChakraField.ErrorText>{errorText}</ChakraField.ErrorText>
-        )}
-      </ChakraField.Root>
-    )
-  },
-)
+export const Field = React.forwardRef<HTMLDivElement, FieldProps>(function Field(
+  { label, children, helperText, errorText, optionalText, ...rest }: FieldProps,
+  ref: React.Ref<HTMLDivElement>,
+): React.ReactElement {
+  return (
+    <ChakraField.Root ref={ref} {...rest}>
+      {label && (
+        <ChakraField.Label>
+          {label}
+          <ChakraField.RequiredIndicator fallback={optionalText} />
+        </ChakraField.Label>
+      )}
+      {children}
+      {helperText && <ChakraField.HelperText>{helperText}</ChakraField.HelperText>}
+      {errorText && <ChakraField.ErrorText>{errorText}</ChakraField.ErrorText>}
+    </ChakraField.Root>
+  )
+})
 
 Field.displayName = "Field"
