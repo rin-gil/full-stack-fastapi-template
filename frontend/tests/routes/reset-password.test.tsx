@@ -538,7 +538,7 @@ describe("ResetPassword Page Integration", (): void => {
 
   it("should render the reset password form correctly", (): void => {
     vi.mocked(useForm).mockReturnValue(
-      createMockUseForm({ new_password: "", confirm_password: "" }),
+      createMockUseForm({ new_password: "", confirm_password: "" }) as any,
     )
     render(<ResetPassword />)
     expect(
@@ -600,7 +600,7 @@ describe("ResetPassword Page Integration", (): void => {
         [name]: { message: error },
       }
       vi.mocked(useForm).mockReturnValue(
-        createMockUseForm(formValues, errors, false),
+        createMockUseForm(formValues, errors, false) as any,
       )
 
       render(<ResetPassword />)
@@ -655,7 +655,9 @@ describe("ResetPassword Page Integration", (): void => {
       new_password: "ValidPass123!",
       confirm_password: "ValidPass123!",
     }
-    vi.mocked(useForm).mockReturnValue(createMockUseForm(formValues, {}, true))
+    vi.mocked(useForm).mockReturnValue(
+      createMockUseForm(formValues, {}, true) as any,
+    )
 
     render(<ResetPassword />)
     const passwordInput: HTMLElement =
@@ -692,7 +694,9 @@ describe("ResetPassword Page Integration", (): void => {
       new_password: "ValidPass123!",
       confirm_password: "ValidPass123!",
     }
-    vi.mocked(useForm).mockReturnValue(createMockUseForm(formValues, {}, true))
+    vi.mocked(useForm).mockReturnValue(
+      createMockUseForm(formValues, {}, true) as any,
+    )
 
     render(<ResetPassword />)
     const submitButton: HTMLElement = screen.getByRole("button", {
@@ -718,7 +722,9 @@ describe("ResetPassword Page Integration", (): void => {
       new_password: "ValidPass123!",
       confirm_password: "ValidPass123!",
     }
-    vi.mocked(useForm).mockReturnValue(createMockUseForm(formValues, {}, true))
+    vi.mocked(useForm).mockReturnValue(
+      createMockUseForm(formValues, {}, true) as any,
+    )
 
     render(<ResetPassword />)
     const passwordInput: HTMLElement =
@@ -752,7 +758,9 @@ describe("ResetPassword Page Integration", (): void => {
       new_password: "ValidPass123!",
       confirm_password: "ValidPass123!",
     }
-    vi.mocked(useForm).mockReturnValue(createMockUseForm(formValues, {}, true))
+    vi.mocked(useForm).mockReturnValue(
+      createMockUseForm(formValues, {}, true) as any,
+    )
 
     render(<ResetPassword />)
     const passwordInput: HTMLElement =
@@ -781,7 +789,9 @@ describe("ResetPassword Page Integration", (): void => {
       new_password: "ValidPass123!",
       confirm_password: "ValidPass123!",
     }
-    vi.mocked(useForm).mockReturnValue(createMockUseForm(formValues, {}, true))
+    vi.mocked(useForm).mockReturnValue(
+      createMockUseForm(formValues, {}, true) as any,
+    )
 
     render(<ResetPassword />)
     const passwordInput: HTMLElement =
