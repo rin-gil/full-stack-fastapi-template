@@ -65,7 +65,7 @@ export const Route = createFileRoute("/reset-password")({
  * for a new password and its confirmation, validates the input, and submits the data to the API.
  * @returns {JSX.Element} The rendered password reset page.
  */
-function ResetPassword(): JSX.Element {
+export function ResetPassword(): JSX.Element {
   const {
     register,
     handleSubmit,
