@@ -1,16 +1,18 @@
+// --- НАЧАЛО ИСПРАВЛЕННОГО КОДА ---
 import { Container, Heading, Input, Text } from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiMail } from "react-icons/fi"
 
-import { type ApiError, LoginService } from "@/client"
+import { type ApiError, loginLoginRouterRecoverPassword } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
-import { emailPattern, handleError } from "@/utils"
+// --- ИЗМЕНЕНИЕ ---: Импорт handleError удален
+import { emailPattern } from "@/utils"
 
 interface FormData {
   email: string
@@ -34,10 +36,11 @@ function RecoverPassword() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>()
-  const { showSuccessToast } = useCustomToast()
+  // --- ИЗМЕНЕНИЕ ---: Получаем showApiErrorToast из хука
+  const { showSuccessToast, showApiErrorToast } = useCustomToast()
 
   const recoverPassword = async (data: FormData) => {
-    await LoginService.recoverPassword({
+    await loginLoginRouterRecoverPassword({
       email: data.email,
     })
   }
@@ -49,12 +52,13 @@ function RecoverPassword() {
       reset()
     },
     onError: (err: ApiError) => {
-      handleError(err)
+      // --- ИЗМЕНЕНИЕ ---: Используем новый, правильный метод
+      showApiErrorToast(err)
     },
   })
 
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
-    mutation.mutate(data)
+  const onSubmit: SubmitHandler<FormData> = (data) => {
+    void mutation.mutate(data)
   }
 
   return (
@@ -71,9 +75,7 @@ function RecoverPassword() {
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
         Password Recovery
       </Heading>
-      <Text textAlign="center">
-        A password recovery email will be sent to the registered account.
-      </Text>
+      <Text textAlign="center">A password recovery email will be sent to the registered account.</Text>
       <Field invalid={!!errors.email} errorText={errors.email?.message}>
         <InputGroup w="100%" startElement={<FiMail />}>
           <Input
@@ -93,3 +95,4 @@ function RecoverPassword() {
     </Container>
   )
 }
+// --- КОНЕЦ ИСПРАВЛЕННОГО КОДА ---
