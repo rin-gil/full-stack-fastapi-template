@@ -20,7 +20,7 @@ export const emailPattern: { value: RegExp; message: string } = {
  * @type {{value: RegExp, message: string}}
  */
 export const namePattern: { value: RegExp; message: string } = {
-  value: /^(?=.{1,30}$)\p{L}(?:[\p{L}\s\-'’]*\p{L})?$/u,
+  value: /^(?=.{3,30}$)\p{L}(?:[\p{L}\s\-'’]*\p{L})?$/u,
   message:
     "Name must be 1-30 characters, start and end with a letter, and can contain spaces, hyphens, or apostrophes.",
 }
