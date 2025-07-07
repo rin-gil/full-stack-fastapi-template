@@ -7,22 +7,13 @@
 
 import { Container, Heading, Text } from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
-import {
-  Link as RouterLink,
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router"
+import { Link as RouterLink, createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import type { JSX } from "react"
 import type { SubmitHandler } from "react-hook-form"
 import { useForm } from "react-hook-form"
 import { FiLock } from "react-icons/fi"
 
-import {
-  type ApiError,
-  type NewPassword,
-  loginLoginRouterResetPassword,
-} from "@/client"
+import { type ApiError, type NewPassword, loginLoginRouterResetPassword } from "@/client"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/ui/password-input"
 import { isLoggedIn } from "@/hooks/useAuth"
@@ -85,9 +76,7 @@ export function ResetPassword(): JSX.Element {
   const navigate = useNavigate()
 
   // Extract the token from the URL once per component render.
-  const token: string | null = new URLSearchParams(window.location.search).get(
-    "token",
-  )
+  const token: string | null = new URLSearchParams(window.location.search).get("token")
 
   const mutation = useMutation({
     /**
@@ -118,9 +107,7 @@ export function ResetPassword(): JSX.Element {
    * prepares the data, and triggers the password reset mutation.
    * @param {NewPasswordForm} data - The validated form data.
    */
-  const onSubmit: SubmitHandler<NewPasswordForm> = (
-    data: NewPasswordForm,
-  ): void => {
+  const onSubmit: SubmitHandler<NewPasswordForm> = (data: NewPasswordForm): void => {
     if (!token) {
       showApiErrorToast({
         // Provide an object that looks like an ApiError for consistent toast display.
@@ -150,9 +137,7 @@ export function ResetPassword(): JSX.Element {
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
         Reset Password
       </Heading>
-      <Text textAlign="center">
-        Please enter your new password and confirm it to reset your password.
-      </Text>
+      <Text textAlign="center">Please enter your new password and confirm it to reset your password.</Text>
       <PasswordInput
         startElement={<FiLock />}
         errors={errors}
