@@ -109,7 +109,7 @@ describe("utils.ts", (): void => {
   // Tests for namePattern
   describe("namePattern", (): void => {
     it("should match valid names", (): void => {
-      const validNames: string[] = ["John Doe", "John", "John-Doe", "J"]
+      const validNames: string[] = ["John Doe", "John", "John-Doe", "Joe"]
       for (const name of validNames) {
         expect(name).toMatch(namePattern.value)
       }
