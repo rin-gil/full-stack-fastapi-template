@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 /**
- * @file Unit tests for the SignUp page component.
+ * @file Unit tests for src/routes/signup.tsx
  * @description These tests verify the complete user flow of the SignUp form,
  * including validation and submission. All UI components and external hooks
  * are mocked to ensure true unit testing in isolation, preventing environment-specific errors.
