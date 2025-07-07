@@ -3,6 +3,7 @@
 
 # pylint: disable=protected-access
 # pylint: disable=redefined-outer-name
+# pylint: disable=duplicate-code
 
 from typing import Any
 from unittest.mock import AsyncMock
@@ -89,7 +90,14 @@ async def test_database_manager_init(
     db_manager: DatabaseManager = DatabaseManager(settings=mock_settings)
     assert db_manager._async_engine == mock_async_engine
     assert db_manager._async_session_factory == mock_async_session_factory
-    mock_create_async_engine.assert_called_once_with(url=mock_settings.sqlalchemy_database_uri)
+    mock_create_async_engine.assert_called_once_with(
+        url=mock_settings.sqlalchemy_database_uri,
+        pool_size=3,
+        max_overflow=2,
+        pool_pre_ping=True,
+        pool_recycle=1700,
+        pool_timeout=30,
+    )
     mock_async_sessionmaker.assert_called_once_with(bind=mock_async_engine, class_=AsyncSession, expire_on_commit=False)
 
 

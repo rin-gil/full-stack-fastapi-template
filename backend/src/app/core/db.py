@@ -21,7 +21,15 @@ class DatabaseManager:
 
         :param settings: The application settings object.
         """
-        self._async_engine: AsyncEngine = create_async_engine(url=settings.sqlalchemy_database_uri)
+        self._async_engine: AsyncEngine = create_async_engine(
+            url=settings.sqlalchemy_database_uri,
+            # --- Recommendations for GENERAL DB (quota ~45 out of 100) ---
+            pool_size=3,  # Number of 'persistent' connections per worker.
+            max_overflow=2,  # Number of 'additional' connections for peaks.
+            pool_pre_ping=True,  # Check the connection before use.
+            pool_recycle=1700,  # Recreating 'old' connections.
+            pool_timeout=30,  # Waiting time for a free connection. (30 seconds)
+        )
         self._async_session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
             bind=self._async_engine, class_=AsyncSession, expire_on_commit=False
         )
