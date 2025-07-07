@@ -49,7 +49,7 @@ interface UserRegisterForm extends UserRegister {
  * It also displays links for existing users to log in.
  * @returns {JSX.Element} The rendered sign-up form.
  */
-function SignUp(): JSX.Element {
+export function SignUp(): JSX.Element {
   const { signUpMutation } = useAuth()
   const {
     register,
