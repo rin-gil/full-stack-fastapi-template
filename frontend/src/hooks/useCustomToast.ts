@@ -75,7 +75,6 @@ const useCustomToast = (): UseCustomToastReturn => {
     const errorMessage: string = extractApiErrorMessage(error)
     showErrorToast(errorMessage)
   }
-
   return { showSuccessToast, showErrorToast, showApiErrorToast }
 }
 
