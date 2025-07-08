@@ -140,7 +140,7 @@ describe("Field", (): void => {
       </Field>,
     )
     const label: HTMLElement = screen.getByText("Email")
-    const requiredIndicator = screen.getByText("*")
+    const requiredIndicator: HTMLElement = screen.getByText("*")
     expect(label).toContainElement(requiredIndicator)
   })
 

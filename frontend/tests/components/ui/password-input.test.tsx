@@ -30,11 +30,7 @@ vi.mock("@/components/ui/field", () => ({
     children,
     errorText,
     invalid,
-  }: {
-    children: ReactElement
-    errorText?: string
-    invalid: boolean
-  }): ReactElement => (
+  }: { children: ReactElement; errorText?: string; invalid: boolean }): ReactElement => (
     <div data-invalid={invalid}>
       {children}
       {errorText && <span>{errorText}</span>}
@@ -51,13 +47,7 @@ vi.mock("@/components/ui/input-group", () => ({
    * @param {ReactElement} [props.endElement] - The element to render at the end.
    * @returns {ReactElement} A mocked div representing the InputGroup.
    */
-  InputGroup: ({
-    children,
-    endElement,
-  }: {
-    children: ReactElement
-    endElement?: ReactElement
-  }): ReactElement => (
+  InputGroup: ({ children, endElement }: { children: ReactElement; endElement?: ReactElement }): ReactElement => (
     <div>
       {children}
       {endElement}
@@ -84,17 +74,7 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
     any // Using 'any' here is a pragmatic choice for the mock, as the props are a mix of HTML and Chakra-specific ones.
   >(function MockChakraIconButton(props, ref): ReactElement {
     // Correctly destructure and ignore non-standard props for a native button
-    const {
-      aspectRatio,
-      me,
-      size,
-      variant,
-      height,
-      color,
-      children,
-      ...rest // `rest` will now only contain valid HTML button attributes
-    } = props
-
+    const { aspectRatio, me, size, variant, height, color, children, ...rest } = props
     return (
       <button ref={ref} type="button" {...rest}>
         {children}
@@ -102,12 +82,7 @@ vi.mock("@chakra-ui/react", async (importOriginal) => {
     )
   })
   MockChakraIconButton.displayName = "MockChakraIconButton"
-
-  return {
-    ...original,
-    Input: MockChakraInput,
-    IconButton: MockChakraIconButton,
-  }
+  return { ...original, Input: MockChakraInput, IconButton: MockChakraIconButton }
 })
 
 // endregion
@@ -120,12 +95,8 @@ describe("PasswordInput", () => {
   it("should render the input and toggle type on click", async () => {
     const user = userEvent.setup()
     render(<PasswordInput name="password" errors={{}} />)
-
     const input = screen.getByPlaceholderText<HTMLInputElement>("password-input")
-    const toggleButton = screen.getByRole("button", {
-      name: "Toggle password visibility",
-    })
-
+    const toggleButton = screen.getByRole("button", { name: "Toggle password visibility" })
     expect(input.type).toBe("password")
     await user.click(toggleButton)
     expect(input.type).toBe("text")
@@ -134,9 +105,7 @@ describe("PasswordInput", () => {
   })
 
   it("should display an error message when an error is provided", () => {
-    const errors: FieldErrors<TestForm> = {
-      password: { type: "required", message: "This field is required" },
-    }
+    const errors: FieldErrors<TestForm> = { password: { type: "required", message: "This field is required" } }
     render(<PasswordInput name="password" errors={errors} />)
     expect(screen.getByText("This field is required")).toBeInTheDocument()
   })

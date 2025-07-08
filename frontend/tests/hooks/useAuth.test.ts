@@ -251,14 +251,10 @@ describe("useAuth", (): void => {
       const mockUser: UserPublic = { id: "1", email: "user@example.com" }
       mockedLoginApi.mockResolvedValueOnce(mockAccessTokenResponse)
       mockedReadMeApi.mockResolvedValueOnce(mockUser)
-
       const { result, rerender } = renderAuthHook()
-      // Call with the correctly structured mockLoginData
       result.current.loginMutation.mutate(mockLoginData)
-
       await waitFor((): void => expect(result.current.loginMutation.isSuccess).toBe(true))
       expect(localStorageMock.setItem).toHaveBeenCalledWith("access_token", "mock-jwt-token")
-
       rerender() // Re-render to trigger `currentUser` query if enabled after token is set
       await waitFor((): void => expect(result.current.user).toEqual(mockUser))
       expect(mockedReadMeApi).toHaveBeenCalledTimes(1)
