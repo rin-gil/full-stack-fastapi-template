@@ -109,11 +109,8 @@ export const PasswordInput = forwardRef(function PasswordInput<TFieldValues exte
     defaultValue: defaultVisible || false,
     onChange: onVisibleChange,
   })
-
   const inputRef: RefObject<HTMLInputElement> = useRef<HTMLInputElement>(null)
-
   const fieldError: FieldError | undefined = errors[name] as FieldError | undefined
-
   return (
     <Field invalid={!!fieldError} errorText={fieldError?.message as ReactNode}>
       <InputGroup
