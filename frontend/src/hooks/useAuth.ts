@@ -5,13 +5,14 @@
  */
 
 import {
+  type QueryClient,
   type UseMutationResult,
   type UseQueryResult,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
+import { type UseNavigateResult, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 
 import {
@@ -86,8 +87,8 @@ export interface UseAuthReturn {
  * logout function, current user data, loading state, and error management.
  */
 const useAuth = (): UseAuthReturn => {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const navigate: UseNavigateResult<string> = useNavigate()
+  const queryClient: QueryClient = useQueryClient()
   const { showApiErrorToast } = useCustomToast()
   const [error, setError] = useState<string | null>(null)
 
@@ -99,11 +100,7 @@ const useAuth = (): UseAuthReturn => {
   const { data: user, isLoading: isUserLoading }: UseQueryResult<UserPublic | null, ApiError> = useQuery<
     UserPublic | null,
     ApiError
-  >({
-    queryKey: ["currentUser"],
-    queryFn: usersUsersRouterReadUserMe,
-    enabled: isLoggedIn(),
-  })
+  >({ queryKey: ["currentUser"], queryFn: usersUsersRouterReadUserMe, enabled: isLoggedIn() })
 
   /**
    * Mutation for user registration.
