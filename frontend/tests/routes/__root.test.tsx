@@ -7,13 +7,11 @@
  * known benign console errors for a clean test output.
  */
 
-// region --- Imports
 import type React from "react"
 import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-// endregion
 
-// region --- Mocks
+// region Mocks
 vi.mock("@tanstack/router-devtools", () => ({
   TanStackRouterDevtools: (): ReactElement => <div data-testid="router-devtools-mock" />,
 }))
@@ -65,7 +63,7 @@ describe("Root Route and Component", () => {
     vi.unstubAllEnvs()
   })
 
-  // region --- Devtools Loading Logic
+  // region Devtools Loading Logic
   describe("TanStackDevtools Loading Logic", () => {
     it("should render devtools in development mode", async () => {
       // Arrange
@@ -73,10 +71,8 @@ describe("Root Route and Component", () => {
       const { render, screen } = await import("../test-utils")
       const { Route } = await import("@/routes/__root")
       const RootComponent = Route.options.component!
-
       // Act
       render(<RootComponent />)
-
       // Assert
       expect(screen.getByTestId("outlet-mock")).toBeInTheDocument()
       expect(await screen.findByTestId("router-devtools-mock")).toBeInTheDocument()
@@ -89,10 +85,8 @@ describe("Root Route and Component", () => {
       const { render, screen } = await import("../test-utils")
       const { Route } = await import("@/routes/__root")
       const RootComponent = Route.options.component!
-
       // Act
       render(<RootComponent />)
-
       // Assert
       expect(screen.getByTestId("outlet-mock")).toBeInTheDocument()
       expect(screen.queryByTestId("router-devtools-mock")).not.toBeInTheDocument()
@@ -101,17 +95,15 @@ describe("Root Route and Component", () => {
   })
   // endregion
 
-  // region --- Route Not Found Logic
+  // region Route Not Found Logic
   describe("Route Not Found Logic", () => {
     it("should render the NotFound component when using the notFoundComponent property", async () => {
       // Arrange
       const { render, screen } = await import("../test-utils")
       const { Route } = await import("@/routes/__root")
       const NotFoundComponent = Route.options.notFoundComponent!
-
       // Act
       render(<NotFoundComponent data={undefined} />)
-
       // Assert
       expect(screen.getByTestId("not-found")).toBeInTheDocument()
     })
