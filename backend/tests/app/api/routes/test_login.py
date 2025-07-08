@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 from pytest_mock import MockerFixture
 
@@ -35,7 +35,6 @@ __all__: tuple = ()
     ids=["success", "invalid_credentials", "inactive_user"],
 )
 async def test_login_access_token(
-    mocker: MockerFixture,
     user_exists: bool,
     is_active: bool,
     raises_exception: bool,
@@ -45,7 +44,6 @@ async def test_login_access_token(
     """
     Test the login_access_token endpoint for various scenarios.
 
-    :param mocker: Pytest mocker fixture.
     :param user_exists: Whether the user exists.
     :param is_active: Whether the user is active.
     :param raises_exception: Whether an exception is expected.
@@ -117,6 +115,7 @@ async def test_test_token() -> None:
     ids=["local_success", "local_not_found_raises", "prod_success_safe", "prod_not_found_safe"],
 )
 async def test_recover_password(
+    mocker: MockerFixture,
     environment: str,
     user_exists: bool,
     raises_exception: bool,
@@ -126,6 +125,7 @@ async def test_recover_password(
     """
     Test the recover_password endpoint for various scenarios and environments.
 
+    :param mocker: Pytest mocker fixture.
     :param environment: The simulated application environment.
     :param user_exists: Whether the user is mocked to exist.
     :param raises_exception: Whether an HTTPException is expected.
@@ -135,42 +135,32 @@ async def test_recover_password(
     """
     user_crud_mock: AsyncMock = AsyncMock(spec=UserCrudDep)
     email_manager_mock: AsyncMock = AsyncMock(spec=EmailManager)
-    background_tasks_mock: MagicMock = MagicMock(spec=BackgroundTasks)
     settings_mock: MagicMock = MagicMock(spec=Settings, ENVIRONMENT=environment)
     email: str = "user@example.com"
     user: User = User(id=uuid4(), email=email, is_active=True, is_superuser=False, full_name=None)
     future_get: asyncio.Future = asyncio.Future()
     future_get.set_result(user if user_exists else None)
     user_crud_mock.get_by_email.return_value = future_get
+    create_task_mock: AsyncMock = mocker.patch(target="app.api.routes.login.create_task")
     login_router: LoginRouter = LoginRouter()
     if raises_exception:
         with pytest.raises(expected_exception=HTTPException) as exc_info:
             await login_router.recover_password(
-                email=email,
-                user_crud=user_crud_mock,
-                email_manager=email_manager_mock,
-                background_tasks=background_tasks_mock,
-                settings=settings_mock,
+                email=email, user_crud=user_crud_mock, email_manager=email_manager_mock, settings=settings_mock
             )
         assert exc_info.value.status_code == 404
         assert exc_info.value.detail == expected_detail_or_message
-        background_tasks_mock.add_task.assert_not_called()
+        create_task_mock.assert_not_called()
     else:
         result: Message = await login_router.recover_password(
-            email=email,
-            user_crud=user_crud_mock,
-            email_manager=email_manager_mock,
-            background_tasks=background_tasks_mock,
-            settings=settings_mock,
+            email=email, user_crud=user_crud_mock, email_manager=email_manager_mock, settings=settings_mock
         )
         user_crud_mock.get_by_email.assert_called_once_with(email=email)
         assert result.message == expected_detail_or_message
         if email_task_called:
-            background_tasks_mock.add_task.assert_called_once_with(
-                email_manager_mock.send_reset_password_email, email_to=email
-            )
+            create_task_mock.assert_called_once()
         else:
-            background_tasks_mock.add_task.assert_not_called()
+            create_task_mock.assert_not_called()
 
 
 @pytest.mark.asyncio
