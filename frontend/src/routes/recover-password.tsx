@@ -63,7 +63,7 @@ export const Route = createFileRoute("/recover-password")({
  * message and a link back to the login page.
  * @returns {ReactElement} The rendered password recovery component.
  */
-function RecoverPassword(): ReactElement {
+export function RecoverPassword(): ReactElement {
   const {
     register,
     handleSubmit,
