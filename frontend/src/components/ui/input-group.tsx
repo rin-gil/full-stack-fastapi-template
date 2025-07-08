@@ -75,10 +75,7 @@ export const InputGroup: ForwardRefExoticComponent<InputGroupProps> = forwardRef
           </InputElement>
         )}
 
-        {cloneElement(child, {
-          ...propsToClone,
-          ...child.props,
-        })}
+        {cloneElement(child, { ...propsToClone, ...child.props })}
 
         {endElement && (
           <InputElement placement="end" {...endElementProps}>
