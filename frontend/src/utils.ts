@@ -23,10 +23,7 @@ type ValidationRules = {
  * @type Pattern
  * @description Structure for validation pattern with RegExp and error message.
  */
-type Pattern = {
-  value: RegExp
-  message: string
-}
+type Pattern = { value: RegExp; message: string }
 
 // endregion
 
@@ -60,9 +57,7 @@ export const namePattern: Pattern = {
  */
 // biome-ignore lint/style/noInferrableTypes: Enforcing explicit types for clarity as per project style guide.
 export const passwordRules = (isRequired: boolean = true): ValidationRules => {
-  const rules: ValidationRules = {
-    minLength: { value: 8, message: "Password must be at least 8 characters" },
-  }
+  const rules: ValidationRules = { minLength: { value: 8, message: "Password must be at least 8 characters" } }
   if (isRequired) {
     rules.required = "Password is required"
   }
