@@ -72,7 +72,7 @@ export const passwordRules = (isRequired: boolean = true): ValidationRules => {
  * @returns {ValidationRules} Validation rules for the password confirmation field.
  */
 export const confirmPasswordRules = (
-  getValues: () => Record<string, string>,
+  getValues: () => Record<string, any>,
   // biome-ignore lint/style/noInferrableTypes: Enforcing explicit types for clarity as per project style guide.
   isRequired: boolean = true,
 ): ValidationRules => {

@@ -4,6 +4,7 @@
  * It handles form submission, client-side validation using react-hook-form,
  * and interacts with the authentication hook to register a new user.
  * It also includes route protection to redirect authenticated users away from the sign-up page.
+ * @module SignUp
  */
 
 import { Container, Flex, Image, Input, Text } from "@chakra-ui/react"
@@ -22,19 +23,24 @@ import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 import { confirmPasswordRules, emailPattern, namePattern, passwordRules } from "@/utils"
 import Logo from "/assets/images/fastapi-logo.svg"
 
-/**
- * @interface UserRegisterForm
- * @description Extends the UserRegister type with an additional field for confirming password on the client-side.
- * This interface is used for the form data handling in `react-hook-form`.
- * @property {string} confirm_password - The field to confirm the user's chosen password.
- */
-interface UserRegisterForm extends UserRegister {
-  confirm_password: string
-}
+// region Type Aliases
 
 /**
- * @function SignUp
- * @description A React functional component that renders the user registration form.
+ * Extends the UserRegister type with an additional field for confirming password on the client-side.
+ */
+type UserRegisterForm = UserRegister & { confirm_password: string }
+
+/**
+ * Configuration for form input icons.
+ */
+type IconConfig = { user: JSX.Element; lock: JSX.Element }
+
+// endregion
+
+// region Main Code
+
+/**
+ * A React functional component that renders the user registration form.
  * It manages form state and validation, handles user input for email, full name,
  * password, and password confirmation, and submits the registration data.
  * It also displays links for existing users to log in.
@@ -45,7 +51,8 @@ export function SignUp(): JSX.Element {
   const {
     register,
     handleSubmit,
-    getValues,
+    watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<UserRegisterForm>({
     mode: "onBlur",
@@ -59,21 +66,28 @@ export function SignUp(): JSX.Element {
   })
 
   /**
-   * @function onSubmit
-   * @description Handles the form submission for user registration.
+   * Icons for form input fields to avoid duplication.
+   * @type {IconConfig}
+   */
+  const icons: IconConfig = {
+    user: <FiUser />,
+    lock: <FiLock />,
+  }
+
+  /**
+   * Handles the form submission for user registration.
    * It extracts the necessary user data, excluding the `confirm_password` field,
    * and triggers the `signUpMutation` to register the user via the API.
    * @param {UserRegisterForm} data - The form data submitted by the user, including `confirm_password`.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   const onSubmit: SubmitHandler<UserRegisterForm> = async (data: UserRegisterForm): Promise<void> => {
-    if (isSubmitting) {
-      // Prevents repeated calls if the form is already in the process of being sent.
-      return
-    }
-    // Destructure to exclude confirm_password, as it's only for client-side validation.
     const { confirm_password, ...userData } = data
-    await signUpMutation.mutateAsync(userData)
+    try {
+      await signUpMutation.mutateAsync(userData)
+    } catch (error) {
+      reset(undefined, { keepValues: true, keepErrors: true })
+    }
   }
 
   return (
@@ -91,7 +105,7 @@ export function SignUp(): JSX.Element {
         >
           <Image src={Logo} alt="FastAPI logo" height="auto" maxW="2xs" alignSelf="center" mb={4} />
           <Field invalid={!!errors.full_name} errorText={errors.full_name?.message}>
-            <InputGroup w="100%" startElement={<FiUser />}>
+            <InputGroup w="100%" startElement={icons.user}>
               <Input
                 id="full_name"
                 {...register("full_name", {
@@ -105,7 +119,7 @@ export function SignUp(): JSX.Element {
           </Field>
 
           <Field invalid={!!errors.email} errorText={errors.email?.message}>
-            <InputGroup w="100%" startElement={<FiUser />}>
+            <InputGroup w="100%" startElement={icons.user}>
               <Input
                 id="email"
                 {...register("email", {
@@ -118,14 +132,14 @@ export function SignUp(): JSX.Element {
             </InputGroup>
           </Field>
           <PasswordInput
-            startElement={<FiLock />}
+            startElement={icons.lock}
             {...register("password", passwordRules())}
             placeholder="Password"
             errors={errors}
           />
           <PasswordInput
             startElement={<FiLock />}
-            {...register("confirm_password", confirmPasswordRules(getValues))}
+            {...register("confirm_password", confirmPasswordRules(watch))}
             placeholder="Confirm Password"
             errors={errors}
           />
@@ -145,8 +159,7 @@ export function SignUp(): JSX.Element {
 }
 
 /**
- * @constant Route
- * @description Defines the route configuration for the '/signup' path.
+ * Defines the route configuration for the '/signup' path.
  * It specifies the component to render and implements a `beforeLoad` guard
  * to redirect authenticated users to the home page, preventing them from accessing
  * the sign-up form while logged in.
@@ -154,8 +167,7 @@ export function SignUp(): JSX.Element {
 export const Route = createFileRoute("/signup")({
   component: SignUp,
   /**
-   * @function beforeLoad
-   * @description An asynchronous function that runs before the route loads.
+   * An asynchronous function that runs before the route loads.
    * It checks if the user is logged in using {@link isLoggedIn} and, if so,
    * throws a redirect to the home page, preventing access to the sign-up form while logged in.
    * @returns {Promise<void>} A promise that resolves if the user is not logged in,
@@ -164,9 +176,7 @@ export const Route = createFileRoute("/signup")({
    */
   beforeLoad: async (): Promise<void> => {
     if (isLoggedIn()) {
-      throw redirect({
-        to: "/",
-      })
+      throw redirect({ to: "/" })
     }
   },
 })
