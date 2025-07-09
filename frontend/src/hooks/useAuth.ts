@@ -2,6 +2,7 @@
  * @file Custom React hook for managing authentication state and actions.
  * @description This hook centralizes user login, registration, logout, and fetching
  * the authenticated user's data using TanStack Query for efficient state management.
+ * @module useAuth
  */
 
 import {
@@ -27,19 +28,12 @@ import {
 } from "@/client"
 import useCustomToast from "./useCustomToast"
 
-/**
- * Checks if an access token exists in localStorage, indicating a logged-in state.
- * @returns {boolean} True if an access token is found, false otherwise.
- */
-const isLoggedIn = (): boolean => {
-  return localStorage.getItem("access_token") !== null
-}
+// region Type Aliases
 
 /**
- * @interface UseAuthReturn
- * @description Interface representing the data returned by the useAuth hook.
+ * Interface representing the data returned by the useAuth hook.
  */
-export interface UseAuthReturn {
+type UseAuthReturn = {
   /**
    * Mutation for user registration.
    * @type {UseMutationResult<UserPublic, ApiError, UserRegister>}
@@ -78,6 +72,18 @@ export interface UseAuthReturn {
   resetError: () => void
 }
 
+// endregion
+
+// region Main Code
+
+/**
+ * Checks if an access token exists in localStorage, indicating a logged-in state.
+ * @returns {boolean} True if an access token is found, false otherwise.
+ */
+const isLoggedIn = (): boolean => {
+  return localStorage.getItem("access_token") !== null
+}
+
 /**
  * A custom hook to manage authentication logic including
  * login, sign-up, logout, and fetching the current user.
@@ -87,20 +93,38 @@ export interface UseAuthReturn {
  * logout function, current user data, loading state, and error management.
  */
 const useAuth = (): UseAuthReturn => {
+  /**
+   * Navigation function for routing.
+   * @type {UseNavigateResult<string>}
+   */
   const navigate: UseNavigateResult<string> = useNavigate()
+  /**
+   * Query client for managing TanStack Query state.
+   * @type {QueryClient}
+   */
   const queryClient: QueryClient = useQueryClient()
+  /**
+   * Custom toast hook for displaying API error notifications.
+   */
   const { showApiErrorToast } = useCustomToast()
+  /**
+   * Local state for authentication error messages.
+   */
   const [error, setError] = useState<string | null>(null)
+  /**
+   * Local state for tracking logged-in status, synced with localStorage.
+   */
+  const [isLoggedInState, setIsLoggedInState] = useState<boolean>(isLoggedIn())
 
   /**
    * Fetches the current user's data.
-   * The query is enabled only if an access token is present.
+   * The query is enabled only if the user is logged in.
    * @type {UseQueryResult<UserPublic | null, ApiError>}
    */
   const { data: user, isLoading: isUserLoading }: UseQueryResult<UserPublic | null, ApiError> = useQuery<
     UserPublic | null,
     ApiError
-  >({ queryKey: ["currentUser"], queryFn: usersUsersRouterReadUserMe, enabled: isLoggedIn() })
+  >({ queryKey: ["currentUser"], queryFn: usersUsersRouterReadUserMe, enabled: isLoggedInState })
 
   /**
    * Mutation for user registration.
@@ -162,14 +186,15 @@ const useAuth = (): UseAuthReturn => {
     mutationFn: loginLoginRouterLoginAccessToken,
     /**
      * Success handler for the login mutation.
-     * Stores the access token and invalidates the currentUser query to re-fetch user data.
-     * Navigates the user to the home page.
+     * Stores the access token, updates logged-in state, invalidates the currentUser query,
+     * and navigates the user to the home page.
      * @param {Token} data - The authentication token received.
      * @returns {void}
      */
-    onSuccess: (data: Token): void => {
+    onSuccess: async (data: Token): Promise<void> => {
       localStorage.setItem("access_token", data.access_token)
-      void queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+      setIsLoggedInState(true)
+      await queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       void navigate({ to: "/" })
     },
     /**
@@ -195,6 +220,7 @@ const useAuth = (): UseAuthReturn => {
    */
   const logout = (): void => {
     localStorage.removeItem("access_token")
+    setIsLoggedInState(false)
     queryClient.setQueryData(["currentUser"], null)
     void navigate({ to: "/login" })
   }
@@ -214,5 +240,11 @@ const useAuth = (): UseAuthReturn => {
   }
 }
 
+// endregion
+
+// region Optional Declarations
+
 export { isLoggedIn }
 export default useAuth
+
+// endregion
