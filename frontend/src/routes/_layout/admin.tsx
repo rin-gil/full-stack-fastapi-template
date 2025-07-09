@@ -1,9 +1,14 @@
+// --- НАЧАЛО ИСПРАВЛЕННОГО КОДА ---
 import { Badge, Container, Flex, Heading, Table } from "@chakra-ui/react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
 
-import { type UserPublic, UsersService } from "@/client"
+import {
+  // ИМПОРТИРУЕМ ТОЧНУЮ ФУНКЦИЮ И ТИП
+  type UserPublic,
+  usersUsersRouterReadUsers,
+} from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
 import PendingUsers from "@/components/Pending/PendingUsers"
@@ -22,8 +27,12 @@ const PER_PAGE = 5
 
 function getUsersQueryOptions({ page }: { page: number }) {
   return {
+    // ВЫЗЫВАЕМ ФУНКЦИЮ НАПРЯМУЮ
     queryFn: () =>
-      UsersService.readUsers({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
+      usersUsersRouterReadUsers({
+        skip: (page - 1) * PER_PAGE,
+        limit: PER_PAGE,
+      }),
     queryKey: ["users", { page }],
   }
 }
@@ -45,7 +54,8 @@ function UsersTable() {
   })
 
   const setPage = (page: number) =>
-    navigate({
+    // Добавляем 'void'
+    void navigate({
       search: (prev: { [key: string]: string }) => ({ ...prev, page }),
     })
 
@@ -82,26 +92,17 @@ function UsersTable() {
               <Table.Cell truncate maxW="sm">
                 {user.email}
               </Table.Cell>
-              <Table.Cell>
-                {user.is_superuser ? "Superuser" : "User"}
-              </Table.Cell>
+              <Table.Cell>{user.is_superuser ? "Superuser" : "User"}</Table.Cell>
               <Table.Cell>{user.is_active ? "Active" : "Inactive"}</Table.Cell>
               <Table.Cell>
-                <UserActionsMenu
-                  user={user}
-                  disabled={currentUser?.id === user.id}
-                />
+                <UserActionsMenu user={user} disabled={currentUser?.id === user.id} />
               </Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>
       </Table.Root>
       <Flex justifyContent="flex-end" mt={4}>
-        <PaginationRoot
-          count={count}
-          pageSize={PER_PAGE}
-          onPageChange={({ page }) => setPage(page)}
-        >
+        <PaginationRoot count={count} pageSize={PER_PAGE} onPageChange={({ page }) => setPage(page)}>
           <Flex>
             <PaginationPrevTrigger />
             <PaginationItems />
@@ -125,3 +126,4 @@ function Admin() {
     </Container>
   )
 }
+// --- КОНЕЦ ИСПРАВЛЕННОГО КОДА ---
