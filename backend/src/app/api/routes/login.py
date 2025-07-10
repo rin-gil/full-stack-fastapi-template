@@ -104,13 +104,13 @@ class LoginRouter:
         user: User | None = await user_crud.get_by_email(email=email)
         if settings.ENVIRONMENT != "local":
             if user:
-                create_task(coro=email_manager.send_test_email(email_to=email))
+                create_task(coro=email_manager.send_reset_password_email(email_to=email))
             return Message(message="If an account with that email exists, a recovery email has been sent.")
         if not user:
             raise HTTPException(
                 status_code=404, detail="The user with this email does not exist in the system. (Local env only)"
             )
-        create_task(coro=email_manager.send_test_email(email_to=email))
+        create_task(coro=email_manager.send_reset_password_email(email_to=email))
         return Message(message="Password recovery email sent")
 
     @login_router.post(
