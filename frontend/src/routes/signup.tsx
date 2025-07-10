@@ -181,4 +181,10 @@ export const Route = createFileRoute("/signup")({
   },
 })
 
+// endregion
+
+// region Optional Declarations
+
 SignUp.displayName = "SignUp"
+
+// endregion
