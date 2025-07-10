@@ -18,7 +18,7 @@ import { extractApiErrorMessage } from "@/utils"
 /**
  * Type representing the object returned by the useCustomToast hook.
  */
-type UseCustomToastReturn = {
+interface UseCustomToastReturn {
   /**
    * Displays a success toast with a custom message.
    * @param {string} description - The message to display.
