@@ -76,6 +76,7 @@ const UserInformation: UserInformationComponent = (): ReactElement => {
       queryClient.setQueryData(["currentUser"], updatedUser)
       void queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       setEditMode(false)
+      reset(updatedUser)
     },
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
@@ -132,7 +133,12 @@ const UserInformation: UserInformationComponent = (): ReactElement => {
         <Flex mt={4} gap={3}>
           {editMode ? (
             <>
-              <Button variant="solid" type="submit" loading={isSubmitting} disabled={!isDirty || mutation.isPending}>
+              <Button
+                variant="solid"
+                type="submit"
+                loading={isSubmitting || mutation.isPending}
+                disabled={!isDirty || mutation.isPending}
+              >
                 Save
               </Button>
               <Button
@@ -143,7 +149,6 @@ const UserInformation: UserInformationComponent = (): ReactElement => {
                   reset({ full_name: "", email: "" })
                   setEditMode(false)
                 }}
-                disabled={isSubmitting}
               >
                 Cancel
               </Button>
