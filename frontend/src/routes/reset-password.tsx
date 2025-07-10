@@ -1,14 +1,20 @@
 /**
- * @file Defines the 'ResetPassword' page component.
- * @description This file contains the component for the password reset functionality.
- * It allows users with a valid token (from a URL) to set a new password. The component
- * handles form validation, submission, and interaction with the backend API via a react-query mutation.
+ * @file Defines the password reset page component.
+ * @description Provides the UI and logic for resetting a user's password using a token from the URL.
+ * Handles form validation, submission, and API interaction via react-query mutation.
+ * @module ResetPassword
  */
 
 import { Container, Heading, Text } from "@chakra-ui/react"
-import { useMutation } from "@tanstack/react-query"
-import { Link as RouterLink, createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
-import type { JSX } from "react"
+import { type UseMutationResult, useMutation } from "@tanstack/react-query"
+import {
+  Link as RouterLink,
+  type UseNavigateResult,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router"
+import type { FC, ReactElement } from "react"
 import type { SubmitHandler } from "react-hook-form"
 import { useForm } from "react-hook-form"
 import { FiLock } from "react-icons/fi"
@@ -20,43 +26,30 @@ import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, passwordRules } from "@/utils"
 
-/**
- * @interface NewPasswordForm
- * @description Extends the NewPassword API type with a `confirm_password` field for client-side validation.
- * @property {string} confirm_password - The field for confirming the new password.
- */
-interface NewPasswordForm extends NewPassword {
-  confirm_password: string
-}
+// region Type Aliases
 
 /**
- * @constant Route
- * @description Defines the route for the '/reset-password' path.
- * It specifies the ResetPassword component and includes a `beforeLoad` guard.
+ * Type alias for the password reset form data.
+ * @type {NewPasswordForm}
  */
-export const Route = createFileRoute("/reset-password")({
-  component: ResetPassword,
-  /**
-   * @function beforeLoad
-   * @description An asynchronous function that runs before the route loads.
-   * It redirects logged-in users to the home page, preventing them from accessing the password reset page.
-   * @returns {Promise<void>} A promise that resolves if the user is not logged in.
-   * @throws {Error} A redirect error if the user is authenticated.
-   */
-  beforeLoad: async (): Promise<void> => {
-    if (isLoggedIn()) {
-      throw redirect({ to: "/" })
-    }
-  },
-})
+type NewPasswordForm = NewPassword & { confirm_password: string }
 
 /**
- * @function ResetPassword
- * @description A page component that renders the password reset form. It handles user input
- * for a new password and its confirmation, validates the input, and submits the data to the API.
- * @returns {JSX.Element} The rendered password reset page.
+ * Type alias for the ResetPassword component.
+ * @type {ResetPasswordComponent}
  */
-export function ResetPassword(): JSX.Element {
+type ResetPasswordComponent = FC
+
+// endregion
+
+// region Main Code
+
+/**
+ * Main component for the password reset page.
+ * @description Renders a form for resetting a password with client-side validation and submits to the API.
+ * @returns {ReactElement} The rendered password reset component.
+ */
+const ResetPassword: ResetPasswordComponent = (): ReactElement => {
   const {
     register,
     handleSubmit,
@@ -66,29 +59,19 @@ export function ResetPassword(): JSX.Element {
   } = useForm<NewPasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      new_password: "",
-      confirm_password: "",
-    },
+    defaultValues: { new_password: "", confirm_password: "" },
   })
 
   const { showSuccessToast, showApiErrorToast } = useCustomToast()
-  const navigate = useNavigate()
-
-  // Extract the token from the URL once per component render.
+  const navigate: UseNavigateResult<string> = useNavigate()
   const token: string | null = new URLSearchParams(window.location.search).get("token")
 
-  const mutation = useMutation({
-    /**
-     * @function mutationFn
-     * @description The async function that performs the API call to reset the password.
-     * @param {{ new_password: string; token: string }} data - The data required for the API call.
-     * @returns {Promise<any>} The result of the API call.
-     */
-    mutationFn: async (data: {
-      new_password: string
-      token: string
-    }): Promise<any> => {
+  /**
+   * Mutation for handling password reset.
+   * @type {UseMutationResult<void, ApiError, { new_password: string; token: string }>}
+   */
+  const mutation: UseMutationResult<void, ApiError, { new_password: string; token: string }> = useMutation({
+    mutationFn: async (data: { new_password: string; token: string }): Promise<any> => {
       return loginLoginRouterResetPassword({ requestBody: data })
     },
     onSuccess: (): void => {
@@ -97,28 +80,28 @@ export function ResetPassword(): JSX.Element {
       void navigate({ to: "/login" })
     },
     onError: (err: ApiError): void => {
-      showApiErrorToast(err)
+      void showApiErrorToast(err)
     },
   })
 
   /**
-   * @function onSubmit
-   * @description Handles the form submission event. It validates the token's existence,
-   * prepares the data, and triggers the password reset mutation.
+   * Handles the form submission event.
    * @param {NewPasswordForm} data - The validated form data.
+   * @returns {void}
    */
   const onSubmit: SubmitHandler<NewPasswordForm> = (data: NewPasswordForm): void => {
     if (!token) {
-      showApiErrorToast({
-        // Provide an object that looks like an ApiError for consistent toast display.
-        body: { detail: "No password reset token found in URL." },
+      void showApiErrorToast({
+        message: "No password reset token found in URL.",
         status: 400,
-        statusText: "Bad Request",
         url: window.location.href,
+        statusText: "Bad Request",
+        body: { detail: "No password reset token found in URL." },
+        request: { method: "POST", url: window.location.href },
+        name: "ApiError",
       })
       return
     }
-    // Exclude `confirm_password` as it's only for client-side validation.
     const { confirm_password, ...newPasswordData } = data
     mutation.mutate({ ...newPasswordData, token })
   }
@@ -162,4 +145,25 @@ export function ResetPassword(): JSX.Element {
   )
 }
 
+/**
+ * Route definition for the password reset page.
+ * @description Checks if the user is authenticated before loading. Redirects to home if authenticated.
+ * @returns {void} Nothing, throws redirect if authenticated.
+ * @throws {redirect} Throws a redirect to "/" with current path if user is logged in.
+ */
+export const Route = createFileRoute("/reset-password")({
+  component: ResetPassword,
+  beforeLoad: (): void => {
+    if (isLoggedIn()) {
+      throw redirect({ to: "/", search: { from: window.location.pathname } })
+    }
+  },
+})
+
+// endregion
+
+// region Optional Declarations
+
 ResetPassword.displayName = "ResetPassword"
+
+// endregion
