@@ -53,10 +53,7 @@ export const Route = createFileRoute("/_layout")({
   component: Layout,
   beforeLoad: (): void => {
     if (!isLoggedIn()) {
-      throw redirect({
-        to: "/login",
-        search: { from: window.location.pathname },
-      })
+      throw redirect({ to: "/login", search: { from: window.location.pathname } })
     }
   },
 })
