@@ -1,71 +1,81 @@
 /**
- * @file This file defines the root route of the application using TanStack Router.
- * @description It sets up the main layout structure with an <Outlet> for nested routes,
- * handles the 404 page, and dynamically loads development tools for non-production environments.
+ * @file Defines the root route of the application using TanStack Router.
+ * @description Sets up the main layout with an Outlet for nested routes, handles 404 page,
+ * and dynamically loads development tools for non-production environments.
+ * @module RootRoute
  */
 
-import { Outlet, createRootRoute } from "@tanstack/react-router"
-import type { ComponentType, ReactElement } from "react"
-import React, { Suspense } from "react"
+import { Outlet, type RootRoute, createRootRoute } from "@tanstack/react-router"
+import type { FC, ReactElement } from "react"
+import { Suspense, lazy } from "react"
 
 import NotFound from "@/components/Common/NotFound"
 
-/**
- * A function that dynamically imports the TanStack Router and React Query Devtools.
- * @description This lazy loading approach ensures that the development tools are only
- * fetched when needed and are not included in the production bundle.
- * It returns a promise that resolves to an object with a `default` property,
- * which is a component rendering both devtools.
- * @returns {Promise<{ default: ComponentType }>} A Promise resolving to the devtools component.
- */
-const loadDevtools = (): Promise<{ default: ComponentType }> =>
-  Promise.all([import("@tanstack/router-devtools"), import("@tanstack/react-query-devtools")]).then(
-    ([routerDevtools, reactQueryDevtools]) => {
-      return {
-        default: (): ReactElement => (
-          <>
-            <routerDevtools.TanStackRouterDevtools />
-            <reactQueryDevtools.ReactQueryDevtools />
-          </>
-        ),
-      }
-    },
-  )
+// region Type Aliases
 
 /**
- * A lazy-loaded component for TanStack Devtools.
- * @description In a production environment, this component is a no-op (returns null).
- * In development, it lazily loads the devtools to prevent them from blocking the initial render.
+ * Type alias for the devtools component.
+ * @type {DevtoolsComponent}
  */
-const TanStackDevtools: React.ComponentType =
-  process.env.NODE_ENV === "production" ? () => null : React.lazy(loadDevtools)
+type DevtoolsComponent = FC
+
+// endregion
+
+// region Main Code
 
 /**
- * The root component of the application.
- * @description It renders the main outlet for all other routes and includes the
- * lazily-loaded devtools wrapped in a Suspense component.
- * @returns {ReactElement} The main structure of the application.
+ * Dynamically imports TanStack Router and React Query Devtools.
+ * @description Lazy loads devtools to exclude them from production bundle. Returns a no-op
+ * component in production.
+ * @async
+ * @returns {Promise<{ default: DevtoolsComponent }>} A Promise resolving to the devtools component.
  */
-const RootComponent: React.FC = (): ReactElement => {
+const loadDevtools = async (): Promise<{ default: DevtoolsComponent }> => {
+  if (import.meta.env.MODE === "production") {
+    return { default: () => null }
+  }
+  const [routerDevtools, reactQueryDevtools] = await Promise.all([
+    import("@tanstack/router-devtools"),
+    import("@tanstack/react-query-devtools"),
+  ])
+  return {
+    default: (): ReactElement => (
+      <>
+        <routerDevtools.TanStackRouterDevtools />
+        <reactQueryDevtools.ReactQueryDevtools />
+      </>
+    ),
+  }
+}
+
+/**
+ * Lazy-loaded component for TanStack Devtools.
+ * @description Renders devtools in development, no-op in production.
+ */
+const TanStackDevtools: DevtoolsComponent = lazy(loadDevtools)
+
+/**
+ * Root component of the application.
+ * @description Renders the main outlet for routes and lazy-loaded devtools within a Suspense boundary.
+ * @returns {ReactElement} The main application structure.
+ */
+const RootComponent: FC = (): ReactElement => {
   return (
     <>
       <Outlet />
-      {/* The Suspense boundary is necessary for React.lazy to work. */}
-      {/* It will render a fallback (null in this case) while the devtools are loading. */}
-      <Suspense>
+      <Suspense fallback={<div />}>
         <TanStackDevtools />
       </Suspense>
     </>
   )
 }
+
+// endregion
+
+// region Optional Declarations
+
 RootComponent.displayName = "RootComponent"
 
-/**
- * The root route configuration for the application.
- * @description It defines the main component to render, `RootComponent`, and specifies
- * a `notFoundComponent` to handle any routes that do not match.
- */
-export const Route = createRootRoute({
-  component: RootComponent,
-  notFoundComponent: NotFound,
-})
+export const Route: RootRoute = createRootRoute({ component: RootComponent, notFoundComponent: NotFound })
+
+// endregion
