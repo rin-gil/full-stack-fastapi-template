@@ -1,18 +1,16 @@
 /**
- * @file Provides the UI and logic for the password recovery page.
- * @description This module defines the component for the /recover-password route.
- * It includes a form for users to enter their email address to receive a
- * recovery link. To prevent user enumeration attacks, the component displays
- * the same success message whether the email exists in the system or not,
- * relying on the backend to handle this logic securely.
+ * @file Defines the password recovery page component.
+ * @description Provides the UI and logic for password recovery with a form to enter an email address.
+ * Prevents user enumeration by displaying the same success message regardless of email existence.
+ * @module RecoverPassword
  */
 
 import { Container, Heading, Input, Text } from "@chakra-ui/react"
-// biome-ignore lint/style/useImportType: <explanation>
-import { UseMutationResult, useMutation } from "@tanstack/react-query"
+import { type UseMutationResult, useMutation } from "@tanstack/react-query"
 import { Link as RouterLink, createFileRoute, redirect } from "@tanstack/react-router"
-import type { SubmitHandler } from "react-hook-form"
-import { useForm } from "react-hook-form"
+import type React from "react"
+import type { FC, ReactElement } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiMail } from "react-icons/fi"
 
 import { type ApiError, loginLoginRouterRecoverPassword } from "@/client"
@@ -22,48 +20,31 @@ import { InputGroup } from "@/components/ui/input-group"
 import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { emailPattern } from "@/utils"
-// biome-ignore lint/style/useImportType: <explanation>
-import React, { ReactElement } from "react"
+
+// region Type Aliases
 
 /**
- * Defines the structure for the password recovery form data.
+ * Type alias for the password recovery form data.
+ * @type {FormData}
  */
-interface FormData {
-  /** The user's email address. */
-  email: string
-}
+type FormData = { email: string }
 
 /**
- * Defines the route for the `/recover-password` path.
- * @description It associates the path with the `RecoverPassword` component and includes
- * a `beforeLoad` guard that redirects authenticated users to the homepage,
- * preventing them from accessing the recovery page unnecessarily.
+ * Type alias for the RecoverPassword component.
+ * @type {RecoverPasswordComponent}
  */
-export const Route = createFileRoute("/recover-password")({
-  component: RecoverPassword,
-  /**
-   * Prevents authenticated users from accessing the password recovery page.
-   * @description If the user is already logged in, this `beforeLoad` function
-   * redirects them to the homepage to prevent unnecessary access to the
-   * recovery page.
-   */
-  beforeLoad: async (): Promise<void> => {
-    if (isLoggedIn()) {
-      throw redirect({
-        to: "/",
-      })
-    }
-  },
-})
+type RecoverPasswordComponent = FC
+
+// endregion
+
+// region Main Code
 
 /**
- * The main component for the password recovery page.
- * @description Renders a form for password recovery. Upon successful submission (or
- * if the user does not exist, to prevent enumeration), it displays a success
- * message and a link back to the login page.
+ * Main component for the password recovery page.
+ * @description Renders a form for password recovery. Displays a success message upon submission.
  * @returns {ReactElement} The rendered password recovery component.
  */
-export function RecoverPassword(): ReactElement {
+const RecoverPassword: RecoverPasswordComponent = (): ReactElement => {
   const {
     register,
     handleSubmit,
@@ -73,19 +54,13 @@ export function RecoverPassword(): ReactElement {
 
   /**
    * Asynchronously triggers the password recovery process.
-   * @description This function calls the API to send a recovery email. It includes
-   * a critical security measure: it catches 404 errors from the API and returns
-   * silently, preventing user enumeration. Other errors are re-thrown to be
-   * handled by `useMutation`'s `onError` callback.
    * @param {FormData} data - The form data containing the user's email.
-   * @returns {Promise<void>} A promise that resolves when the operation is complete.
+   * @returns {Promise<void>} Resolves when the operation is complete.
    * @throws {ApiError} Throws an error if the API returns a status other than 404.
    */
   const recoverPassword: (data: FormData) => Promise<void> = async (data: FormData): Promise<void> => {
     try {
-      await loginLoginRouterRecoverPassword({
-        email: data.email,
-      })
+      await loginLoginRouterRecoverPassword({ email: data.email })
     } catch (err) {
       if ((err as ApiError).status === 404) {
         return
@@ -94,13 +69,15 @@ export function RecoverPassword(): ReactElement {
     }
   }
 
-  const mutation: UseMutationResult<void, ApiError, FormData> = useMutation<void, ApiError, FormData>({
+  /**
+   * Mutation for handling password recovery.
+   * @type {UseMutationResult<void, ApiError, FormData>}
+   */
+  const mutation: UseMutationResult<void, ApiError, FormData> = useMutation({
     mutationFn: recoverPassword,
     onSuccess: undefined,
     /**
      * Handles errors during the password recovery mutation.
-     * @description This callback is triggered when the API request for password recovery fails.
-     * It displays a toast notification with the error message extracted from the API error.
      * @param {ApiError} err - The error object returned by the API.
      * @returns {void}
      */
@@ -111,8 +88,6 @@ export function RecoverPassword(): ReactElement {
 
   /**
    * Handles the form submission event.
-   * @description This function is called by `react-hook-form`'s `handleSubmit`
-   * with the validated form data. It then triggers the mutation.
    * @param {FormData} data - The validated form data.
    * @returns {void}
    */
@@ -179,4 +154,25 @@ export function RecoverPassword(): ReactElement {
   )
 }
 
+/**
+ * Route definition for the password recovery page.
+ * @description Checks if the user is authenticated before loading. Redirects to home if authenticated.
+ * @returns {void} Nothing, throws redirect if authenticated.
+ * @throws {redirect} Throws a redirect to "/" with current path if user is logged in.
+ */
+export const Route = createFileRoute("/recover-password")({
+  component: RecoverPassword,
+  beforeLoad: (): void => {
+    if (isLoggedIn()) {
+      throw redirect({ to: "/", search: { from: window.location.pathname } })
+    }
+  },
+})
+
+// endregion
+
+// region Optional Declarations
+
 RecoverPassword.displayName = "RecoverPasswordPage"
+
+// endregion
