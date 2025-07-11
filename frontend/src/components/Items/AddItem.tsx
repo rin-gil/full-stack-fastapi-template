@@ -1,21 +1,29 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+/**
+ * @file Defines the AddItem dialog component.
+ * @description Provides a form for creating a new item with validation and API mutation handling.
+ * @module AddItem
+ */
+
+"use client"
+
+import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
+import type React from "react"
+import type { FC } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import {
-  Button,
-  DialogActionTrigger,
-  DialogTitle,
-  Input,
-  Text,
-  VStack,
-} from "@chakra-ui/react"
+  type ApiError,
+  type CancelablePromise,
+  type ItemCreate,
+  type ItemPublic,
+  itemsItemsRouterCreateItem,
+} from "@/client"
+import useCustomToast from "@/hooks/useCustomToast"
+import { Button, DialogActionTrigger, DialogTitle, Input, Text, VStack } from "@chakra-ui/react"
+// @ts-ignore
+import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
 import { useState } from "react"
 import { FaPlus } from "react-icons/fa"
-
-import { type ItemCreate, ItemsService } from "@/client"
-import type { ApiError } from "@/client/core/ApiError"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -27,41 +35,79 @@ import {
 } from "../ui/dialog"
 import { Field } from "../ui/field"
 
-const AddItem = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast } = useCustomToast()
+// region Type Aliases
+
+/**
+ * Form data interface for item creation.
+ * @interface ItemCreateForm
+ */
+interface ItemCreateForm extends ItemCreate {
+  // Matches ItemCreate structure
+}
+
+/**
+ * Type alias for the AddItem component.
+ * @type {AddItemComponent}
+ */
+type AddItemComponent = FC
+
+/**
+ * Type alias for the mutation result of creating an item.
+ * @type {ItemCreateMutation}
+ */
+type ItemCreateMutation = UseMutationResult<ItemCreate, ApiError, ItemCreate>
+
+// endregion
+
+// region Main Code
+
+/**
+ * Default values for the item creation form.
+ * @constant {ItemCreateForm}
+ */
+const defaultValues: ItemCreateForm = {
+  title: "",
+  description: "",
+}
+
+/**
+ * Dialog component for adding a new item.
+ * @returns {React.ReactElement} The rendered AddItem dialog component.
+ */
+const AddItem: AddItemComponent = (): React.ReactElement => {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const queryClient: QueryClient = useQueryClient()
+  const { showSuccessToast, showApiErrorToast } = useCustomToast()
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isValid, isSubmitting },
-  } = useForm<ItemCreate>({
-    mode: "onBlur",
-    criteriaMode: "all",
-    defaultValues: {
-      title: "",
-      description: "",
-    },
-  })
+  } = useForm<ItemCreateForm>({ mode: "onBlur", criteriaMode: "all", defaultValues })
 
-  const mutation = useMutation({
-    mutationFn: (data: ItemCreate) =>
-      ItemsService.createItem({ requestBody: data }),
-    onSuccess: () => {
+  /**
+   * Mutation for creating a new item via API.
+   * @constant {ItemCreateMutation}
+   */
+  const mutation: ItemCreateMutation = useMutation({
+    mutationFn: (data: ItemCreate): CancelablePromise<ItemPublic> => itemsItemsRouterCreateItem({ requestBody: data }),
+    onSuccess: (): void => {
       showSuccessToast("Item created successfully.")
-      reset()
       setIsOpen(false)
     },
-    onError: (err: ApiError) => {
-      handleError(err)
+    onError: (err: ApiError): void => {
+      showApiErrorToast(err)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] })
+    onSettled: (): void => {
+      void queryClient.invalidateQueries({ queryKey: ["items"] })
     },
   })
 
-  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
+  /**
+   * Handles form submission for item creation.
+   * @param {ItemCreateForm} data - The form data for creating an item.
+   * @returns {Promise<void>} Resolves when submission is complete.
+   */
+  const onSubmit: SubmitHandler<ItemCreateForm> = async (data: ItemCreateForm): Promise<void> => {
     mutation.mutate(data)
   }
 
@@ -70,10 +116,10 @@ const AddItem = () => {
       size={{ base: "xs", md: "md" }}
       placement="center"
       open={isOpen}
-      onOpenChange={({ open }) => setIsOpen(open)}
+      onOpenChange={({ open }: OpenChangeDetails): void => setIsOpen(open)}
     >
       <DialogTrigger asChild>
-        <Button value="add-item" my={4}>
+        <Button my={4}>
           <FaPlus fontSize="16px" />
           Add Item
         </Button>
@@ -86,12 +132,7 @@ const AddItem = () => {
           <DialogBody>
             <Text mb={4}>Fill in the details to add a new item.</Text>
             <VStack gap={4}>
-              <Field
-                required
-                invalid={!!errors.title}
-                errorText={errors.title?.message}
-                label="Title"
-              >
+              <Field required invalid={!!errors.title} errorText={errors.title?.message} label="Title" id="title">
                 <Input
                   id="title"
                   {...register("title", {
@@ -99,19 +140,25 @@ const AddItem = () => {
                   })}
                   placeholder="Title"
                   type="text"
+                  autoComplete="off"
                 />
               </Field>
 
               <Field
+                required
                 invalid={!!errors.description}
                 errorText={errors.description?.message}
                 label="Description"
+                id="description"
               >
                 <Input
                   id="description"
-                  {...register("description")}
+                  {...register("description", {
+                    required: "Description is required.",
+                  })}
                   placeholder="Description"
                   type="text"
+                  autoComplete="off"
                 />
               </Field>
             </VStack>
@@ -119,19 +166,15 @@ const AddItem = () => {
 
           <DialogFooter gap={2}>
             <DialogActionTrigger asChild>
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                disabled={isSubmitting}
-              >
+              <Button variant="subtle" colorPalette="gray" disabled={isSubmitting}>
                 Cancel
               </Button>
             </DialogActionTrigger>
             <Button
               variant="solid"
               type="submit"
-              disabled={!isValid}
-              loading={isSubmitting}
+              disabled={!isValid || mutation.isPending}
+              loading={mutation.isPending}
             >
               Save
             </Button>
@@ -142,5 +185,13 @@ const AddItem = () => {
     </DialogRoot>
   )
 }
+
+// endregion
+
+// region Optional Declarations
+
+AddItem.displayName = "AddItem"
+
+// endregion
 
 export default AddItem
