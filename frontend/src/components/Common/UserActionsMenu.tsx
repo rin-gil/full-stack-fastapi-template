@@ -48,7 +48,7 @@ export const UserActionsMenu: UserActionsMenuComponent = function UserActionsMen
   user,
   disabled,
 }: UserActionsMenuProps): React.ReactElement {
-  // State for the delete dialog is now managed here.
+  const [isEditOpen, setEditOpen] = useState<boolean>(false)
   const [isDeleteOpen, setDeleteOpen] = useState<boolean>(false)
 
   const triggerButton: React.ReactElement = (
@@ -62,14 +62,13 @@ export const UserActionsMenu: UserActionsMenuComponent = function UserActionsMen
       <MenuRoot>
         <MenuTrigger asChild>{triggerButton}</MenuTrigger>
         <MenuContent>
-          <EditUser user={user} />
-          {/* The default export of DeleteUser is now the trigger. */}
+          <EditUser user={user} onOpen={(): void => setEditOpen(true)} />
           <DeleteUser id={user.id} onOpen={(): void => setDeleteOpen(true)} />
         </MenuContent>
       </MenuRoot>
 
-      {/* The dialog is rendered here, outside the menu, and controlled by local state. */}
-      <DeleteUser.Dialog id={user.id} isOpen={isDeleteOpen} onClose={(): void => setDeleteOpen(false)} />
+      <EditUser.Dialog user={user} isOpen={isEditOpen} onClose={() => setEditOpen(false)} />
+      <DeleteUser.Dialog id={user.id} isOpen={isDeleteOpen} onClose={() => setDeleteOpen(false)} />
     </React.Fragment>
   )
 }
