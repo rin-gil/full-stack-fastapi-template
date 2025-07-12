@@ -11,12 +11,12 @@
 
 import type { ApiError } from "@/client"
 import { toaster } from "@/components/ui/toaster"
-import { extractApiErrorMessage } from "@/utils"
 
 // region Type Aliases
 
 /**
  * Type representing the object returned by the useCustomToast hook.
+ * @interface UseCustomToastReturn
  */
 interface UseCustomToastReturn {
   /**
@@ -54,11 +54,7 @@ const useCustomToast = (): UseCustomToastReturn => {
    * @returns {void}
    */
   const showSuccessToast = (description: string): void => {
-    toaster.create({
-      title: "Success!",
-      description,
-      type: "success",
-    })
+    toaster.create({ title: "Success!", description, type: "success" })
   }
 
   /**
@@ -67,11 +63,7 @@ const useCustomToast = (): UseCustomToastReturn => {
    * @returns {void}
    */
   const showErrorToast = (description: string): void => {
-    toaster.create({
-      title: "Something went wrong!",
-      description,
-      type: "error",
-    })
+    toaster.create({ title: "Something went wrong!", description, type: "error" })
   }
 
   /**
@@ -85,8 +77,22 @@ const useCustomToast = (): UseCustomToastReturn => {
      * The extracted user-friendly error message.
      * @type {string}
      */
-    const errorMessage: string = extractApiErrorMessage(error)
-    showErrorToast(errorMessage)
+    const errorMessage: string = error.getUserFriendlyMessage()
+    /**
+     * The title for the error toast, depending on whether a user-friendly message was extracted.
+     * @type {string}
+     */
+    const title: string = errorMessage === error.message ? "Something went wrong!" : "Error:"
+    /**
+     * The description for the error toast, omitted if no user-friendly message was extracted.
+     * @type {string | undefined}
+     */
+    const description: string | undefined = errorMessage === error.message ? undefined : errorMessage
+
+    // Log technical details for debugging
+    console.error(error.getFormattedMessage())
+
+    toaster.create({ title, description, type: "error" })
   }
 
   return { showSuccessToast, showErrorToast, showApiErrorToast }

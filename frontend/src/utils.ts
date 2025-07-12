@@ -5,8 +5,6 @@
  * @module utils
  */
 
-import type { ApiError } from "./client"
-
 // region Type Aliases
 
 /**
@@ -89,37 +87,6 @@ export const confirmPasswordRules = (
     rules.required = "Password confirmation is required"
   }
   return rules
-}
-
-/**
- * Extracts a user-friendly error message from an API error.
- *
- * @param {unknown} error - The error object, expected to be ApiError, Error, or unknown.
- * @returns {string} A user-friendly error message.
- */
-export const extractApiErrorMessage = (error: unknown): string => {
-  if (typeof error === "object" && error !== null && "body" in error && "status" in error) {
-    const body = (error as ApiError).body as unknown
-    if (typeof body === "object" && body !== null && "detail" in body) {
-      const detail: unknown = (body as { detail: unknown }).detail
-      if (
-        Array.isArray(detail) &&
-        detail.length > 0 &&
-        typeof detail[0] === "object" &&
-        detail[0] !== null &&
-        "msg" in detail[0]
-      ) {
-        return String((detail[0] as { msg: unknown }).msg)
-      }
-      if (typeof detail === "string") {
-        return detail
-      }
-    }
-  }
-  if (error instanceof Error) {
-    return error.message
-  }
-  return "An unexpected error occurred."
 }
 
 // endregion
