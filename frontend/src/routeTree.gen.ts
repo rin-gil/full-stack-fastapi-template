@@ -1,5 +1,7 @@
 /* prettier-ignore-start */
 
+// noinspection JSUnusedGlobalSymbols
+
 /* eslint-disable */
 
 // @ts-nocheck
