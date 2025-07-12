@@ -164,7 +164,7 @@ const EditItemDialog: FC<EditItemDialogProps> = ({
           <DialogBody>
             <Text mb={4}>Update the item details below.</Text>
             <VStack gap={4}>
-              <Field required invalid={!!errors.title} errorText={errors.title?.message} label="Title">
+              <Field id="title" required invalid={!!errors.title} errorText={errors.title?.message} label="Title">
                 <Input
                   id="title"
                   {...register("title", {
@@ -174,7 +174,12 @@ const EditItemDialog: FC<EditItemDialogProps> = ({
                   type="text"
                 />
               </Field>
-              <Field invalid={!!errors.description} errorText={errors.description?.message} label="Description">
+              <Field
+                id="description"
+                invalid={!!errors.description}
+                errorText={errors.description?.message}
+                label="Description"
+              >
                 <Input id="description" {...register("description")} placeholder="Description" type="text" />
               </Field>
             </VStack>
