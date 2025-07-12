@@ -12,10 +12,10 @@ import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/d
 import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
 import type React from "react"
 import type { FC } from "react"
-import { FiTrash2 } from "react-icons/fi"
 
 import { type ApiError, type CancelablePromise, usersUsersRouterDeleteUser } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
+import { FiTrash2 } from "react-icons/fi"
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -77,12 +77,7 @@ type UserDeleteMutation = UseMutationResult<Message, ApiError, string>
  * @returns {React.ReactElement} The rendered MenuItem trigger.
  */
 const DeleteUserTrigger: FC<DeleteUserTriggerProps> = ({ id, onOpen }: DeleteUserTriggerProps): React.ReactElement => (
-  // ИЗМЕНЕНИЕ 1: Добавляем обязательный 'value' и убираем отступы.
   <MenuItem onClick={onOpen} p={0} value="delete-user">
-    {/*
-      ИЗМЕНЕНИЕ 2: Убираем неработающий 'leftIcon' и передаем иконку
-      как дочерний элемент. Добавляем 'gap' для отступа между иконкой и текстом.
-    */}
     <Button
       variant="ghost"
       size="sm"
@@ -90,7 +85,7 @@ const DeleteUserTrigger: FC<DeleteUserTriggerProps> = ({ id, onOpen }: DeleteUse
       justifyContent="flex-start"
       w="100%"
       aria-label={`Delete user with ID ${id}`}
-      gap={2} // Отступ между иконкой и текстом
+      gap={2}
     >
       <FiTrash2 fontSize="16px" />
       Delete User
@@ -116,11 +111,13 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
     mutationFn: (userId: string): CancelablePromise<Message> => usersUsersRouterDeleteUser({ id: userId }),
     onSuccess: (): void => {
       showSuccessToast("The user was deleted successfully")
-      void queryClient.prefetchQuery({ queryKey: ["users"] })
       onClose()
     },
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
+    },
+    onSettled: (): void => {
+      void queryClient.invalidateQueries({ queryKey: ["users"] })
     },
   })
 
@@ -139,7 +136,12 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
       }}
     >
       <DialogContent>
-        <form onSubmit={onSubmit}>
+        <form
+          onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
+            e.preventDefault()
+            onSubmit()
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
           </DialogHeader>
@@ -174,7 +176,7 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
  * Composite component for user deletion.
  * Exports the trigger as the main component and the dialog as a property.
  */
-const DeleteUser = Object.assign(DeleteUserTrigger, {
+const DeleteUser: FC<DeleteUserTriggerProps> = Object.assign(DeleteUserTrigger, {
   Dialog: DeleteUserDialog,
 })
 
