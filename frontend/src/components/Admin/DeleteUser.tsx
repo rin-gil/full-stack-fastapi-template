@@ -106,6 +106,10 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
   const queryClient: QueryClient = useQueryClient()
   const { showSuccessToast, showApiErrorToast } = useCustomToast()
 
+  /**
+   * Mutation for deleting a user via API.
+   * @constant {UserDeleteMutation}
+   */
   const mutation: UserDeleteMutation = useMutation({
     mutationFn: (userId: string): CancelablePromise<Message> => usersUsersRouterDeleteUser({ id: userId }),
     onSuccess: (): void => {
@@ -118,6 +122,10 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
     },
   })
 
+  /**
+   * Handles form submission for user deletion.
+   * @returns {void} Executes the deletion mutation.
+   */
   const onSubmit = (): void => {
     mutation.mutate(id)
   }
@@ -173,11 +181,10 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
  * Composite component for user deletion.
  * Exports the trigger as the main component and the dialog as a property.
  */
-const DeleteUser: React.FC<DeleteUserTriggerProps> & {
-  Dialog: React.FC<DeleteUserDialogProps>
-} = Object.assign(DeleteUserTrigger, {
-  Dialog: DeleteUserDialog,
-})
+const DeleteUser: React.FC<DeleteUserTriggerProps> & { Dialog: React.FC<DeleteUserDialogProps> } = Object.assign(
+  DeleteUserTrigger,
+  { Dialog: DeleteUserDialog },
+)
 
 // endregion
 
