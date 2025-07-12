@@ -1,6 +1,17 @@
-/* prettier-ignore-start */
+/**
+ * @file This is an auto-generated file by TanStack Router.
+ * @description It defines the route structure of the application. The file imports all route components,
+ * creates route objects, and constructs the final route tree. It also generates TypeScript
+ * types for `FileRoutesByPath` to ensure type safety across the routing system.
+ *
+ * It is strongly advised not to modify this file manually, as any changes will be overwritten
+ * on the next run of the route generator. The suppressions at the top of the file
+ * (`eslint-disable`, `@ts-nocheck`, etc.) are necessary for the generator to function correctly.
+ * @see https://tanstack.com/router/v1/docs/guide/file-based-routing
+ * @module Routes
+ */
 
-// noinspection JSUnusedGlobalSymbols
+/* prettier-ignore-start */
 
 /* eslint-disable */
 
