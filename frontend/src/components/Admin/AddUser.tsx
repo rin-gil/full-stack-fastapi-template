@@ -91,6 +91,7 @@ const AddUser: AddUserComponent = (): React.ReactElement => {
     register,
     handleSubmit,
     getValues,
+    reset,
     formState: { errors, isValid, isSubmitting },
   } = useForm<UserCreateForm>({ mode: "onBlur", criteriaMode: "all", defaultValues })
 
@@ -103,6 +104,7 @@ const AddUser: AddUserComponent = (): React.ReactElement => {
     onSuccess: (): void => {
       showSuccessToast("User created successfully.")
       void queryClient.invalidateQueries({ queryKey: ["users"] })
+      reset(defaultValues)
       setIsOpen(false)
     },
     onError: (err: ApiError): void => {

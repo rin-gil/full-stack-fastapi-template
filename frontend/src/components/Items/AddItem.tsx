@@ -80,6 +80,7 @@ const AddItem: AddItemComponent = (): React.ReactElement => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isValid, isSubmitting },
   } = useForm<ItemCreateForm>({ mode: "onBlur", criteriaMode: "all", defaultValues })
 
@@ -92,6 +93,7 @@ const AddItem: AddItemComponent = (): React.ReactElement => {
     onSuccess: (): void => {
       showSuccessToast("Item created successfully.")
       void queryClient.invalidateQueries({ queryKey: ["items"] })
+      reset(defaultValues)
       setIsOpen(false)
     },
     onError: (err: ApiError): void => {
