@@ -6,11 +6,6 @@
 
 "use client"
 
-import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
-import type React from "react"
-import type { FC } from "react"
-import { Controller, type SubmitHandler, useForm } from "react-hook-form"
-
 import {
   type ApiError,
   type CancelablePromise,
@@ -25,7 +20,11 @@ import { DialogActionTrigger, DialogTitle, Input, Text, VStack } from "@chakra-u
 import type { CheckedChangeDetails } from "@chakra-ui/react/dist/types/components/checkbox/namespace"
 // @ts-ignore
 import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
+import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
+import type React from "react"
+import type { FC } from "react"
 import { useState } from "react"
+import { Controller, type SubmitHandler, useForm } from "react-hook-form"
 import { FaPlus } from "react-icons/fa"
 import { Button } from "../ui/button"
 import { Checkbox } from "../ui/checkbox"
@@ -103,13 +102,11 @@ const AddUser: AddUserComponent = (): React.ReactElement => {
     mutationFn: (data: UserCreate): CancelablePromise<UserPublic> => usersUsersRouterCreateUser({ requestBody: data }),
     onSuccess: (): void => {
       showSuccessToast("User created successfully.")
+      void queryClient.invalidateQueries({ queryKey: ["users"] })
       setIsOpen(false)
     },
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
-    },
-    onSettled: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["users"] })
     },
   })
 

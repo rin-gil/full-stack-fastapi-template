@@ -6,11 +6,6 @@
 
 "use client"
 
-import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
-import type React from "react"
-import type { FC } from "react"
-import { type SubmitHandler, useForm } from "react-hook-form"
-
 import {
   type ApiError,
   type CancelablePromise,
@@ -22,7 +17,11 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { Button, DialogActionTrigger, DialogTitle, Input, Text, VStack } from "@chakra-ui/react"
 // @ts-ignore
 import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
+import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
+import type React from "react"
+import type { FC } from "react"
 import { useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 import { FaPlus } from "react-icons/fa"
 import {
   DialogBody,
@@ -92,13 +91,11 @@ const AddItem: AddItemComponent = (): React.ReactElement => {
     mutationFn: (data: ItemCreate): CancelablePromise<ItemPublic> => itemsItemsRouterCreateItem({ requestBody: data }),
     onSuccess: (): void => {
       showSuccessToast("Item created successfully.")
+      void queryClient.invalidateQueries({ queryKey: ["items"] })
       setIsOpen(false)
     },
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
-    },
-    onSettled: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["items"] })
     },
   })
 
