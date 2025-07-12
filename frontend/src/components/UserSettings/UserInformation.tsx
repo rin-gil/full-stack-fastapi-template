@@ -98,38 +98,54 @@ const UserInformation: UserInformationComponent = (): ReactElement => {
         User Information
       </Heading>
       <Box w={{ sm: "full", md: "sm" }} as="form" onSubmit={handleSubmit(onSubmit)}>
-        <Field label="Full name" invalid={!!errors.full_name} errorText={errors.full_name?.message}>
-          {editMode ? (
+        {editMode ? (
+          <Field id="full_name" label="Full name" invalid={!!errors.full_name} errorText={errors.full_name?.message}>
             <Input
+              id="full_name"
               {...register("full_name", {
                 required: "Full name is required",
                 pattern: namePattern,
               })}
               type="text"
               size="md"
+              autoComplete="on"
             />
-          ) : (
+          </Field>
+        ) : (
+          <Box>
+            <Text fontWeight="bold" fontSize="sm">
+              Full name
+            </Text>
             <Text fontSize="md" py={2} color={!currentUser?.full_name ? "gray" : "inherit"} truncate maxW="sm">
               {currentUser?.full_name || "N/A"}
             </Text>
-          )}
-        </Field>
-        <Field mt={4} label="Email" invalid={!!errors.email} errorText={errors.email?.message}>
+          </Box>
+        )}
+        <Box mt={4}>
           {editMode ? (
-            <Input
-              {...register("email", {
-                required: "Email is required",
-                pattern: emailPattern,
-              })}
-              type="email"
-              size="md"
-            />
+            <Field id="email" label="Email" invalid={!!errors.email} errorText={errors.email?.message}>
+              <Input
+                id="email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: emailPattern,
+                })}
+                type="email"
+                size="md"
+                autoComplete="on"
+              />
+            </Field>
           ) : (
-            <Text fontSize="md" py={2} truncate maxW="sm">
-              {currentUser?.email}
-            </Text>
+            <Box>
+              <Text fontWeight="bold" fontSize="sm">
+                Email
+              </Text>
+              <Text fontSize="md" py={2} truncate maxW="sm">
+                {currentUser?.email}
+              </Text>
+            </Box>
           )}
-        </Field>
+        </Box>
         <Flex mt={4} gap={3}>
           {editMode ? (
             <>
