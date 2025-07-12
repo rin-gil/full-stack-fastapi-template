@@ -1,10 +1,22 @@
-import { Button, DialogTitle, Text } from "@chakra-ui/react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { FiTrash2 } from "react-icons/fi"
+/**
+ * @file Defines the DeleteUser dialog component.
+ * @description Provides a confirmation dialog for deleting a user by an administrator.
+ * @module DeleteUser
+ */
 
-import { UsersService } from "@/client"
+"use client"
+
+import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
+import type React from "react"
+import type { FC } from "react"
+
+import { type ApiError, type CancelablePromise, usersUsersRouterDeleteUser } from "@/client"
+import useCustomToast from "@/hooks/useCustomToast"
+import { Button, Text } from "@chakra-ui/react"
+// @ts-ignore
+import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
+import { useState } from "react"
+import { FiTrash2 } from "react-icons/fi"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -13,75 +25,117 @@ import {
   DialogFooter,
   DialogHeader,
   DialogRoot,
+  DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import useCustomToast from "@/hooks/useCustomToast"
+} from "../ui/dialog"
 
-const DeleteUser = ({ id }: { id: string }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm()
+// region Type Aliases
 
-  const deleteUser = async (id: string) => {
-    await UsersService.deleteUser({ userId: id })
-  }
+/**
+ * Interface for the API response message.
+ * @interface Message
+ */
+interface Message {
+  message: string
+}
 
-  const mutation = useMutation({
-    mutationFn: deleteUser,
-    onSuccess: () => {
+/**
+ * Props for the DeleteUser component.
+ * @interface DeleteUserProps
+ */
+interface DeleteUserProps {
+  /** The ID of the user to be deleted. */
+  id: string
+}
+
+/**
+ * Type alias for the DeleteUser component.
+ * @type {DeleteUserComponent}
+ */
+type DeleteUserComponent = FC<DeleteUserProps>
+
+/**
+ * Type alias for the mutation result of deleting a user.
+ * @type {UserDeleteMutation}
+ */
+type UserDeleteMutation = UseMutationResult<Message, ApiError, string>
+
+// endregion
+
+// region Main Code
+
+/**
+ * Dialog component for confirming the deletion of a user.
+ * @param {DeleteUserProps} props - The component props.
+ * @returns {React.ReactElement} The rendered DeleteUser dialog component.
+ */
+const DeleteUser: DeleteUserComponent = ({ id }: DeleteUserProps): React.ReactElement => {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const queryClient: QueryClient = useQueryClient()
+  const { showSuccessToast, showApiErrorToast } = useCustomToast()
+
+  /**
+   * Mutation for deleting a user via API.
+   * @constant {UserDeleteMutation}
+   */
+  const mutation: UserDeleteMutation = useMutation({
+    mutationFn: (userId: string): CancelablePromise<Message> => usersUsersRouterDeleteUser({ id: userId }),
+    onSuccess: (): void => {
       showSuccessToast("The user was deleted successfully")
       setIsOpen(false)
     },
-    onError: () => {
-      showErrorToast("An error occurred while deleting the user")
+    onError: (err: ApiError): void => {
+      showApiErrorToast(err)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries()
+    onSettled: (): void => {
+      void queryClient.invalidateQueries({ queryKey: ["users"] })
     },
   })
 
-  const onSubmit = async () => {
+  /**
+   * Handles form submission for user deletion.
+   * @returns {void} Executes the deletion mutation.
+   */
+  const onSubmit = (): void => {
     mutation.mutate(id)
   }
 
   return (
     <DialogRoot
       size={{ base: "xs", md: "md" }}
-      placement="center"
       role="alertdialog"
+      placement="center"
       open={isOpen}
-      onOpenChange={({ open }) => setIsOpen(open)}
+      onOpenChange={({ open }: OpenChangeDetails): void => setIsOpen(open)}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" colorPalette="red">
+        <Button
+          variant="ghost"
+          size="sm"
+          colorPalette="red"
+          justifyContent="flex-start"
+          w="100%"
+          aria-label={`Delete user with ID ${id}`}
+        >
           <FiTrash2 fontSize="16px" />
           Delete User
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
           </DialogHeader>
           <DialogBody>
             <Text mb={4}>
-              All items associated with this user will also be{" "}
-              <strong>permanently deleted.</strong> Are you sure? You will not
-              be able to undo this action.
+              All items associated with this user will also be <strong>permanently deleted.</strong> Are you sure? You
+              will not be able to undo this action.
             </Text>
           </DialogBody>
 
           <DialogFooter gap={2}>
             <DialogActionTrigger asChild>
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                disabled={isSubmitting}
-              >
+              <Button variant="subtle" colorPalette="gray" disabled={mutation.isPending}>
                 Cancel
               </Button>
             </DialogActionTrigger>
@@ -89,7 +143,8 @@ const DeleteUser = ({ id }: { id: string }) => {
               variant="solid"
               colorPalette="red"
               type="submit"
-              loading={isSubmitting}
+              disabled={mutation.isPending}
+              loading={mutation.isPending}
             >
               Delete
             </Button>
@@ -100,5 +155,13 @@ const DeleteUser = ({ id }: { id: string }) => {
     </DialogRoot>
   )
 }
+
+// endregion
+
+// region Optional Declarations
+
+DeleteUser.displayName = "DeleteUser"
+
+// endregion
 
 export default DeleteUser
