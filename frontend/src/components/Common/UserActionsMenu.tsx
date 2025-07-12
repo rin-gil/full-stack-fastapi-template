@@ -8,7 +8,8 @@
 
 import type { UserPublic } from "@/client"
 import { IconButton } from "@chakra-ui/react"
-import type * as React from "react"
+import * as React from "react"
+import { useState } from "react"
 import type { FC } from "react"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import DeleteUser from "../Admin/DeleteUser"
@@ -47,6 +48,9 @@ export const UserActionsMenu: UserActionsMenuComponent = function UserActionsMen
   user,
   disabled,
 }: UserActionsMenuProps): React.ReactElement {
+  // State for the delete dialog is now managed here.
+  const [isDeleteOpen, setDeleteOpen] = useState<boolean>(false)
+
   const triggerButton: React.ReactElement = (
     <IconButton variant="ghost" color="inherit" disabled={disabled}>
       <BsThreeDotsVertical />
@@ -54,13 +58,19 @@ export const UserActionsMenu: UserActionsMenuComponent = function UserActionsMen
   )
 
   return (
-    <MenuRoot>
-      <MenuTrigger asChild>{triggerButton}</MenuTrigger>
-      <MenuContent>
-        <EditUser user={user} />
-        <DeleteUser id={user.id} />
-      </MenuContent>
-    </MenuRoot>
+    <React.Fragment>
+      <MenuRoot>
+        <MenuTrigger asChild>{triggerButton}</MenuTrigger>
+        <MenuContent>
+          <EditUser user={user} />
+          {/* The default export of DeleteUser is now the trigger. */}
+          <DeleteUser id={user.id} onOpen={(): void => setDeleteOpen(true)} />
+        </MenuContent>
+      </MenuRoot>
+
+      {/* The dialog is rendered here, outside the menu, and controlled by local state. */}
+      <DeleteUser.Dialog id={user.id} isOpen={isDeleteOpen} onClose={(): void => setDeleteOpen(false)} />
+    </React.Fragment>
   )
 }
 

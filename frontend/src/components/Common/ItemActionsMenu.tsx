@@ -8,8 +8,9 @@
 
 import type { ItemPublic } from "@/client"
 import { IconButton } from "@chakra-ui/react"
-import type * as React from "react"
+import * as React from "react"
 import type { FC } from "react"
+import { useState } from "react"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import DeleteItem from "../Items/DeleteItem"
 import EditItem from "../Items/EditItem"
@@ -44,6 +45,8 @@ type ItemActionsMenuComponent = FC<ItemActionsMenuProps>
 export const ItemActionsMenu: ItemActionsMenuComponent = function ItemActionsMenu({
   item,
 }: ItemActionsMenuProps): React.ReactElement {
+  const [isDeleteOpen, setDeleteOpen] = useState<boolean>(false)
+
   const triggerButton: React.ReactElement = (
     <IconButton variant="ghost" color="inherit">
       <BsThreeDotsVertical />
@@ -51,13 +54,17 @@ export const ItemActionsMenu: ItemActionsMenuComponent = function ItemActionsMen
   )
 
   return (
-    <MenuRoot>
-      <MenuTrigger asChild>{triggerButton}</MenuTrigger>
-      <MenuContent>
-        <EditItem item={item} />
-        <DeleteItem id={item.id} />
-      </MenuContent>
-    </MenuRoot>
+    <React.Fragment>
+      <MenuRoot>
+        <MenuTrigger asChild>{triggerButton}</MenuTrigger>
+        <MenuContent>
+          <EditItem item={item} />
+          <DeleteItem id={item.id} onOpen={(): void => setDeleteOpen(true)} />
+        </MenuContent>
+      </MenuRoot>
+
+      <DeleteItem.Dialog id={item.id} isOpen={isDeleteOpen} onClose={(): void => setDeleteOpen(false)} />
+    </React.Fragment>
   )
 }
 

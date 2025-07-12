@@ -6,19 +6,17 @@
 
 "use client"
 
+import { Button, MenuItem, Text } from "@chakra-ui/react"
+// @ts-ignore
+import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
 import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
 import type React from "react"
 import type { FC } from "react"
+import { FiTrash2 } from "react-icons/fi"
 
 import { type ApiError, type CancelablePromise, usersUsersRouterDeleteUser } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
-import { Button, Text } from "@chakra-ui/react"
-// @ts-ignore
-import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
-import { useState } from "react"
-import { FiTrash2 } from "react-icons/fi"
 import {
-  DialogActionTrigger,
   DialogBody,
   DialogCloseTrigger,
   DialogContent,
@@ -26,7 +24,6 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-  DialogTrigger,
 } from "../ui/dialog"
 
 // region Type Aliases
@@ -40,19 +37,28 @@ interface Message {
 }
 
 /**
- * Props for the DeleteUser component.
- * @interface DeleteUserProps
+ * Props for the DeleteUserTrigger component.
+ * @interface DeleteUserTriggerProps
  */
-interface DeleteUserProps {
-  /** The ID of the user to be deleted. */
+interface DeleteUserTriggerProps {
+  /** The ID of the user. */
   id: string
+  /** Function to open the dialog. */
+  onOpen: () => void
 }
 
 /**
- * Type alias for the DeleteUser component.
- * @type {DeleteUserComponent}
+ * Props for the DeleteUserDialog component.
+ * @interface DeleteUserDialogProps
  */
-type DeleteUserComponent = FC<DeleteUserProps>
+interface DeleteUserDialogProps {
+  /** The ID of the user to be deleted. */
+  id: string
+  /** Controls if the dialog is open. */
+  isOpen: boolean
+  /** Function to close the dialog. */
+  onClose: () => void
+}
 
 /**
  * Type alias for the mutation result of deleting a user.
@@ -65,37 +71,59 @@ type UserDeleteMutation = UseMutationResult<Message, ApiError, string>
 // region Main Code
 
 /**
+ * A menu item component that triggers the delete user dialog.
+ * It wraps a fully styled Button inside a functional, "invisible" MenuItem.
+ * @param {DeleteUserTriggerProps} props - The component props.
+ * @returns {React.ReactElement} The rendered MenuItem trigger.
+ */
+const DeleteUserTrigger: FC<DeleteUserTriggerProps> = ({ id, onOpen }: DeleteUserTriggerProps): React.ReactElement => (
+  // ИЗМЕНЕНИЕ 1: Добавляем обязательный 'value' и убираем отступы.
+  <MenuItem onClick={onOpen} p={0} value="delete-user">
+    {/*
+      ИЗМЕНЕНИЕ 2: Убираем неработающий 'leftIcon' и передаем иконку
+      как дочерний элемент. Добавляем 'gap' для отступа между иконкой и текстом.
+    */}
+    <Button
+      variant="ghost"
+      size="sm"
+      colorPalette="red"
+      justifyContent="flex-start"
+      w="100%"
+      aria-label={`Delete user with ID ${id}`}
+      gap={2} // Отступ между иконкой и текстом
+    >
+      <FiTrash2 fontSize="16px" />
+      Delete User
+    </Button>
+  </MenuItem>
+)
+
+/**
  * Dialog component for confirming the deletion of a user.
- * @param {DeleteUserProps} props - The component props.
+ * This component is controlled by external state.
+ * @param {DeleteUserDialogProps} props - The component props.
  * @returns {React.ReactElement} The rendered DeleteUser dialog component.
  */
-const DeleteUser: DeleteUserComponent = ({ id }: DeleteUserProps): React.ReactElement => {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
+  id,
+  isOpen,
+  onClose,
+}: DeleteUserDialogProps): React.ReactElement => {
   const queryClient: QueryClient = useQueryClient()
   const { showSuccessToast, showApiErrorToast } = useCustomToast()
 
-  /**
-   * Mutation for deleting a user via API.
-   * @constant {UserDeleteMutation}
-   */
   const mutation: UserDeleteMutation = useMutation({
     mutationFn: (userId: string): CancelablePromise<Message> => usersUsersRouterDeleteUser({ id: userId }),
     onSuccess: (): void => {
       showSuccessToast("The user was deleted successfully")
-      setIsOpen(false)
+      void queryClient.prefetchQuery({ queryKey: ["users"] })
+      onClose()
     },
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
     },
-    onSettled: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
   })
 
-  /**
-   * Handles form submission for user deletion.
-   * @returns {void} Executes the deletion mutation.
-   */
   const onSubmit = (): void => {
     mutation.mutate(id)
   }
@@ -106,21 +134,10 @@ const DeleteUser: DeleteUserComponent = ({ id }: DeleteUserProps): React.ReactEl
       role="alertdialog"
       placement="center"
       open={isOpen}
-      onOpenChange={({ open }: OpenChangeDetails): void => setIsOpen(open)}
+      onOpenChange={({ open }: OpenChangeDetails): void => {
+        if (!open) onClose()
+      }}
     >
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          colorPalette="red"
-          justifyContent="flex-start"
-          w="100%"
-          aria-label={`Delete user with ID ${id}`}
-        >
-          <FiTrash2 fontSize="16px" />
-          Delete User
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <form onSubmit={onSubmit}>
           <DialogHeader>
@@ -132,13 +149,10 @@ const DeleteUser: DeleteUserComponent = ({ id }: DeleteUserProps): React.ReactEl
               will not be able to undo this action.
             </Text>
           </DialogBody>
-
           <DialogFooter gap={2}>
-            <DialogActionTrigger asChild>
-              <Button variant="subtle" colorPalette="gray" disabled={mutation.isPending}>
-                Cancel
-              </Button>
-            </DialogActionTrigger>
+            <Button variant="subtle" colorPalette="gray" disabled={mutation.isPending} onClick={onClose}>
+              Cancel
+            </Button>
             <Button
               variant="solid"
               colorPalette="red"
@@ -155,6 +169,14 @@ const DeleteUser: DeleteUserComponent = ({ id }: DeleteUserProps): React.ReactEl
     </DialogRoot>
   )
 }
+
+/**
+ * Composite component for user deletion.
+ * Exports the trigger as the main component and the dialog as a property.
+ */
+const DeleteUser = Object.assign(DeleteUserTrigger, {
+  Dialog: DeleteUserDialog,
+})
 
 // endregion
 
