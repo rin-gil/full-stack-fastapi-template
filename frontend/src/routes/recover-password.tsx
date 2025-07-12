@@ -137,6 +137,7 @@ const RecoverPassword: RecoverPasswordComponent = (): ReactElement => {
                 placeholder="Email"
                 type="email"
                 disabled={mutation.isPending}
+                autoComplete="on"
               />
             </InputGroup>
           </Field>

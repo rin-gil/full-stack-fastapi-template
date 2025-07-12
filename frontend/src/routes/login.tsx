@@ -93,6 +93,7 @@ const Login: LoginComponent = (): ReactElement => {
               required: "Username is required",
               pattern: emailPattern,
             })}
+            autoComplete="on"
           />
         </InputGroup>
       </Field>

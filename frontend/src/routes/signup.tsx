@@ -114,6 +114,7 @@ export function SignUp(): JSX.Element {
                 })}
                 placeholder="Full Name"
                 type="text"
+                autoComplete="on"
               />
             </InputGroup>
           </Field>
@@ -128,6 +129,7 @@ export function SignUp(): JSX.Element {
                 })}
                 placeholder="Email"
                 type="email"
+                autoComplete="on"
               />
             </InputGroup>
           </Field>
