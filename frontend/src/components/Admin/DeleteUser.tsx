@@ -173,7 +173,9 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
  * Composite component for user deletion.
  * Exports the trigger as the main component and the dialog as a property.
  */
-const DeleteUser: FC<DeleteUserTriggerProps> = Object.assign(DeleteUserTrigger, {
+const DeleteUser: React.FC<DeleteUserTriggerProps> & {
+  Dialog: React.FC<DeleteUserDialogProps>
+} = Object.assign(DeleteUserTrigger, {
   Dialog: DeleteUserDialog,
 })
 

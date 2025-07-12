@@ -67,8 +67,8 @@ export const UserActionsMenu: UserActionsMenuComponent = function UserActionsMen
         </MenuContent>
       </MenuRoot>
 
-      <EditUser.Dialog user={user} isOpen={isEditOpen} onClose={() => setEditOpen(false)} />
-      <DeleteUser.Dialog id={user.id} isOpen={isDeleteOpen} onClose={() => setDeleteOpen(false)} />
+      <EditUser.Dialog user={user} isOpen={isEditOpen} onClose={(): void => setEditOpen(false)} />
+      <DeleteUser.Dialog id={user.id} isOpen={isDeleteOpen} onClose={(): void => setDeleteOpen(false)} />
     </React.Fragment>
   )
 }
