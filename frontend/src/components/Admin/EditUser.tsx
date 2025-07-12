@@ -6,11 +6,6 @@
 
 "use client"
 
-import { type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
-import type React from "react"
-import type { FC } from "react"
-import { Controller, type SubmitHandler, useForm } from "react-hook-form"
-
 import {
   type ApiError,
   type CancelablePromise,
@@ -19,12 +14,16 @@ import {
   usersUsersRouterUpdateUser,
 } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
-import { emailPattern, namePattern, passwordRules } from "@/utils"
+import { type ValidationRules, emailPattern, namePattern, passwordRules } from "@/utils"
 import { Button, Input, MenuItem, Text, VStack } from "@chakra-ui/react"
 // @ts-ignore
 import type { CheckedChangeDetails } from "@chakra-ui/react/dist/types/components/checkbox/namespace"
 // @ts-ignore
 import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
+import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
+import type React from "react"
+import type { FC } from "react"
+import { Controller, type SubmitHandler, useForm } from "react-hook-form"
 import { FaExchangeAlt } from "react-icons/fa"
 import { Checkbox } from "../ui/checkbox"
 import {
@@ -40,31 +39,64 @@ import { Field } from "../ui/field"
 
 // region Type Aliases
 
+/**
+ * Form data interface for user update, extending UserUpdate with confirm_password.
+ * @interface UserUpdateForm
+ */
 interface UserUpdateForm extends UserUpdate {
+  /** Confirmation of the password (optional). */
   confirm_password?: string
 }
 
+/**
+ * Props for the EditUserTrigger component.
+ * @interface EditUserTriggerProps
+ */
 interface EditUserTriggerProps {
+  /** The user to be edited. */
   user: UserPublic
+  /** Function to open the dialog. */
   onOpen: () => void
 }
 
+/**
+ * Props for the EditUserDialog component.
+ * @interface EditUserDialogProps
+ */
 interface EditUserDialogProps {
+  /** The user to be edited. */
   user: UserPublic
+  /** Controls if the dialog is open. */
   isOpen: boolean
+  /** Function to close the dialog. */
   onClose: () => void
 }
 
+/**
+ * Type alias for the EditUser component.
+ * @type {EditUserComponent}
+ */
 type EditUserComponent = FC<EditUserTriggerProps>
+
+/**
+ * Type alias for the mutation result of updating a user.
+ * @type {UserUpdateMutation}
+ */
 type UserUpdateMutation = UseMutationResult<UserPublic, ApiError, UserUpdate>
 
 // endregion
 
 // region Main Code
 
+/**
+ * A menu item component that triggers the edit user dialog.
+ * It wraps a fully styled Button inside a functional, "invisible" MenuItem.
+ * @param {EditUserTriggerProps} props - The component props.
+ * @returns {React.ReactElement} The rendered MenuItem trigger.
+ */
 const EditUserTrigger: EditUserComponent = ({ user, onOpen }: EditUserTriggerProps): React.ReactElement => {
   return (
-    <MenuItem onClick={onOpen} p={0} value="edit-user">
+    <MenuItem onClick={onOpen} p={0} value="edit-user" mb={2}>
       <Button
         variant="ghost"
         size="sm"
@@ -80,47 +112,52 @@ const EditUserTrigger: EditUserComponent = ({ user, onOpen }: EditUserTriggerPro
   )
 }
 
+/**
+ * Dialog component for editing an existing user.
+ * This component is controlled by external state.
+ * @param {EditUserDialogProps} props - The component props.
+ * @returns {React.ReactElement} The rendered EditUser dialog component.
+ */
 const EditUserDialog: FC<EditUserDialogProps> = ({
   user,
   isOpen,
   onClose,
 }: EditUserDialogProps): React.ReactElement => {
-  const queryClient = useQueryClient()
+  const queryClient: QueryClient = useQueryClient()
   const { showSuccessToast, showApiErrorToast } = useCustomToast()
   const {
     control,
     register,
     handleSubmit,
     getValues,
-    reset, // reset нужен
+    reset,
     formState: { errors, isValid, isSubmitting },
-  } = useForm<UserUpdateForm>({
-    mode: "onBlur",
-    criteriaMode: "all",
-    defaultValues: user,
-  })
+  } = useForm<UserUpdateForm>({ mode: "onBlur", criteriaMode: "all", defaultValues: user })
 
-  // ИЗМЕНЕНИЕ: Возвращаем логику мутации, близкую к оригинальной.
+  /**
+   * Mutation for updating a user via API.
+   * @constant {UserUpdateMutation}
+   */
   const mutation: UserUpdateMutation = useMutation({
     mutationFn: (data: UserUpdate): CancelablePromise<UserPublic> =>
       usersUsersRouterUpdateUser({ id: user.id, requestBody: data }),
-    onSuccess: (data) => {
+    onSuccess: (data: UserPublic): void => {
       showSuccessToast("User updated successfully.")
-      // Сбрасываем форму с новыми данными, как в оригинале, но без reset()
+      void queryClient.invalidateQueries({ queryKey: ["users"] })
       reset(data)
-      onClose() // Используем onClose вместо setIsOpen(false)
+      onClose()
     },
     onError: (err: ApiError): void => {
-      showApiErrorToast(err) // Используем новый обработчик ошибок
-    },
-    // Возвращаем onSettled с invalidateQueries
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ["users"] })
+      showApiErrorToast(err)
     },
   })
 
+  /**
+   * Handles form submission for user update.
+   * @param {UserUpdateForm} data - The form data for updating a user.
+   * @returns {Promise<void>} Resolves when submission is complete.
+   */
   const onSubmit: SubmitHandler<UserUpdateForm> = async (data: UserUpdateForm): Promise<void> => {
-    // Логика для опционального пароля
     const { password, ...rest } = data
     const updatedData: UserUpdate = { ...rest, password: password === "" ? undefined : password }
     mutation.mutate(updatedData)
@@ -177,9 +214,9 @@ const EditUserDialog: FC<EditUserDialogProps> = ({
                 <Input
                   id="password"
                   {...register("password", {
-                    validate: (value) => {
+                    validate: (value: string | null | undefined): string | true => {
                       if (!value) return true
-                      const rules = passwordRules(false)
+                      const rules: ValidationRules = passwordRules(false)
                       return rules.validate?.(value) || "Invalid password format."
                     },
                   })}
@@ -198,7 +235,7 @@ const EditUserDialog: FC<EditUserDialogProps> = ({
                 <Input
                   id="confirm_password"
                   {...register("confirm_password", {
-                    validate: (value) => {
+                    validate: (value: string | undefined): string | true => {
                       if (!getValues("password")) return true
                       return value === getValues("password") || "The passwords do not match."
                     },
@@ -260,10 +297,20 @@ const EditUserDialog: FC<EditUserDialogProps> = ({
   )
 }
 
-const EditUser = Object.assign(EditUserTrigger, {
+/**
+ * Composite component for user editing.
+ * Exports the trigger as the main component and the dialog as a property.
+ */
+const EditUser: EditUserComponent & { Dialog: React.FC<EditUserDialogProps> } = Object.assign(EditUserTrigger, {
   Dialog: EditUserDialog,
 })
 
+// endregion
+
+// region Optional Declarations
+
 EditUser.displayName = "EditUser"
+
+// endregion
 
 export default EditUser
