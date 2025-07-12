@@ -1,35 +1,50 @@
-import { Box, Flex, IconButton, Text } from "@chakra-ui/react"
-import { useQueryClient } from "@tanstack/react-query"
+/**
+ * @file Defines the Sidebar component.
+ * @description Renders a responsive sidebar with navigation items and a logout button for mobile view.
+ * @module Sidebar
+ */
+
+"use client"
+
+import { Box, Flex, IconButton, Text, VStack } from "@chakra-ui/react"
+import { type QueryClient, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import type React from "react"
+import type { FC } from "react"
 import { FaBars } from "react-icons/fa"
 import { FiLogOut } from "react-icons/fi"
 
 import type { UserPublic } from "@/client"
 import useAuth from "@/hooks/useAuth"
-import {
-  DrawerBackdrop,
-  DrawerBody,
-  DrawerCloseTrigger,
-  DrawerContent,
-  DrawerRoot,
-  DrawerTrigger,
-} from "../ui/drawer"
+import { DrawerBackdrop, DrawerBody, DrawerCloseTrigger, DrawerContent, DrawerRoot, DrawerTrigger } from "../ui/drawer"
 import SidebarItems from "./SidebarItems"
 
-const Sidebar = () => {
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+// region Type Aliases
+
+/**
+ * Type alias for the Sidebar component.
+ * @type {SidebarComponent}
+ */
+type SidebarComponent = FC
+
+// endregion
+
+// region Main Code
+
+/**
+ * Sidebar component for rendering a responsive sidebar with navigation items.
+ * @returns {React.ReactElement} The rendered Sidebar component.
+ */
+const Sidebar: SidebarComponent = (): React.ReactElement => {
+  const queryClient: QueryClient = useQueryClient()
+  const currentUser: UserPublic | undefined = queryClient.getQueryData<UserPublic>(["currentUser"])
   const { logout } = useAuth()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState<boolean>(false)
 
   return (
-    <>
+    <aside>
       {/* Mobile */}
-      <DrawerRoot
-        placement="start"
-        open={open}
-        onOpenChange={(e) => setOpen(e.open)}
-      >
+      <DrawerRoot placement="start" open={open} onOpenChange={({ open }) => setOpen(open)}>
         <DrawerBackdrop />
         <DrawerTrigger asChild>
           <IconButton
@@ -47,7 +62,7 @@ const Sidebar = () => {
         <DrawerContent maxW="xs">
           <DrawerCloseTrigger />
           <DrawerBody>
-            <Flex flexDir="column" justify="space-between">
+            <VStack justify="space-between" gap={0}>
               <Box>
                 <SidebarItems onClose={() => setOpen(false)} />
                 <Flex
@@ -69,29 +84,28 @@ const Sidebar = () => {
                   Logged in as: {currentUser.email}
                 </Text>
               )}
-            </Flex>
+            </VStack>
           </DrawerBody>
           <DrawerCloseTrigger />
         </DrawerContent>
       </DrawerRoot>
 
       {/* Desktop */}
-
-      <Box
-        display={{ base: "none", md: "flex" }}
-        position="sticky"
-        bg="bg.subtle"
-        top={0}
-        minW="xs"
-        h="100vh"
-        p={4}
-      >
+      <Box display={{ base: "none", md: "flex" }} position="sticky" bg="bg.subtle" top={0} minW="xs" h="100vh" p={4}>
         <Box w="100%">
           <SidebarItems />
         </Box>
       </Box>
-    </>
+    </aside>
   )
 }
+
+// endregion
+
+// region Optional Declarations
+
+Sidebar.displayName = "Sidebar"
+
+// endregion
 
 export default Sidebar
