@@ -13,7 +13,7 @@ import type { ApiError } from "./client"
  * @type ValidationRules
  * @description Structure for React Hook Form validation rules.
  */
-type ValidationRules = {
+export type ValidationRules = {
   required?: string
   minLength?: { value: number; message: string }
   validate?: (value: string) => boolean | string
