@@ -56,4 +56,5 @@ export const Route = createFileRoute("/_layout/")({
 
 // endregion
 
+// noinspection JSUnusedGlobalSymbols
 export default Dashboard
