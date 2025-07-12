@@ -6,15 +6,14 @@
 
 "use client"
 
+import { type ApiError, type CancelablePromise, usersUsersRouterDeleteUser } from "@/client"
+import useCustomToast from "@/hooks/useCustomToast"
 import { Button, MenuItem, Text } from "@chakra-ui/react"
 // @ts-ignore
 import type { OpenChangeDetails } from "@chakra-ui/react/dist/types/components/dialog/namespace"
 import { type QueryClient, type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
 import type React from "react"
 import type { FC } from "react"
-
-import { type ApiError, type CancelablePromise, usersUsersRouterDeleteUser } from "@/client"
-import useCustomToast from "@/hooks/useCustomToast"
 import { FiTrash2 } from "react-icons/fi"
 import {
   DialogBody,
@@ -111,13 +110,11 @@ const DeleteUserDialog: FC<DeleteUserDialogProps> = ({
     mutationFn: (userId: string): CancelablePromise<Message> => usersUsersRouterDeleteUser({ id: userId }),
     onSuccess: (): void => {
       showSuccessToast("The user was deleted successfully")
+      void queryClient.invalidateQueries({ queryKey: ["users"] })
       onClose()
     },
     onError: (err: ApiError): void => {
       showApiErrorToast(err)
-    },
-    onSettled: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["users"] })
     },
   })
 
