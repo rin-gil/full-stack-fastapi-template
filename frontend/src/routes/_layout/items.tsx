@@ -14,10 +14,11 @@ import type { FC } from "react"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
-import type { CancelablePromise, ItemPublic, ItemsItemsRouterReadItemsResponse, ItemsPublic } from "@/client"
+import type { CancelablePromise, ItemPublic, ItemsItemsRouterReadItemsResponse } from "@/client"
 import { itemsItemsRouterReadItems } from "@/client"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
+import { PendingItems } from "@/components/Pending/PendingItems"
 import {
   PaginationItems,
   PaginationNextTrigger,
@@ -89,9 +90,11 @@ const ItemsTable: ItemsTableComponent = (): React.ReactElement => {
   const navigate: ReturnType<typeof useNavigate> = useNavigate({ from: Route.fullPath })
   const { page }: SearchParams = Route.useSearch()
 
-  const { data, isPlaceholderData } = useQuery({
+  const { data, isPlaceholderData, isLoading } = useQuery({
     ...getItemsQueryOptions({ page }),
-    placeholderData: (prevData: ItemsPublic | undefined): ItemsPublic | undefined => prevData,
+    placeholderData: (
+      prevData: ItemsItemsRouterReadItemsResponse | undefined,
+    ): ItemsItemsRouterReadItemsResponse | undefined => prevData,
   })
 
   const setPage: (page: number) => void = (page: number): void =>
@@ -101,6 +104,10 @@ const ItemsTable: ItemsTableComponent = (): React.ReactElement => {
 
   const items: ItemPublic[] = data?.data ?? []
   const count: number = data?.count ?? 0
+
+  if (isLoading) {
+    return <PendingItems />
+  }
 
   if (items.length === 0) {
     return (
@@ -194,7 +201,7 @@ ItemsTable.displayName = "ItemsTable"
 
 export const Route = createFileRoute("/_layout/items")({
   component: Items,
-  validateSearch: (search: Record<string, unknown>): { page: number } => itemsSearchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): SearchParams => itemsSearchSchema.parse(search),
 })
 
 // endregion

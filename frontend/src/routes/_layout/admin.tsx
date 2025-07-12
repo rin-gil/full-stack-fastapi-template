@@ -5,6 +5,8 @@
  */
 
 import { Badge, Container, EmptyState, Flex, Heading, Table, VStack } from "@chakra-ui/react"
+// @ts-ignore
+import type { PageChangeDetails } from "@chakra-ui/react/dist/types/components/pagination/namespace"
 import { type UseQueryResult, useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import type React from "react"
@@ -16,6 +18,7 @@ import { z } from "zod"
 import { type CancelablePromise, type UserPublic, type UsersPublic, usersUsersRouterReadUsers } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
+import { PendingUsers } from "@/components/Pending/PendingUsers"
 import {
   PaginationItems,
   PaginationNextTrigger,
@@ -92,7 +95,7 @@ const UsersTable: UsersTableComponent = (): React.ReactElement => {
 
   const usersQueryKey: [string, { page: number }] = ["users", { page }]
 
-  const { data, isPlaceholderData }: UseQueryResult<UsersPublic, Error> = useQuery({
+  const { data, isPlaceholderData, isLoading }: UseQueryResult<UsersPublic, Error> = useQuery({
     queryFn: (): CancelablePromise<UsersPublic> =>
       usersUsersRouterReadUsers({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
     queryKey: usersQueryKey,
@@ -117,6 +120,10 @@ const UsersTable: UsersTableComponent = (): React.ReactElement => {
 
   const users: UserPublic[] = data?.data ?? []
   const count: number = data?.count ?? 0
+
+  if (isLoading) {
+    return <PendingUsers />
+  }
 
   if (users.length === 0) {
     return (
@@ -176,7 +183,7 @@ const UsersTable: UsersTableComponent = (): React.ReactElement => {
           count={count}
           pageSize={PER_PAGE}
           page={page}
-          onPageChange={({ page: newPage }) => setPage(newPage)}
+          onPageChange={({ page: newPage }: PageChangeDetails): void => setPage(newPage)}
         >
           <Flex>
             <PaginationPrevTrigger aria-label="Previous page" />
