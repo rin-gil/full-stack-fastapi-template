@@ -6,7 +6,15 @@
 
 "use client"
 
-import { AbsoluteCenter, Menu as ChakraMenu, Portal } from "@chakra-ui/react"
+import {
+  AbsoluteCenter,
+  Menu as ChakraMenu,
+  type MenuArrowProps,
+  type MenuCheckboxItemProps,
+  type MenuItemGroupProps,
+  type MenuRadioItemProps,
+  Portal,
+} from "@chakra-ui/react"
 import * as React from "react"
 import type { FC } from "react"
 import { LuCheck, LuChevronRight } from "react-icons/lu"
@@ -134,7 +142,10 @@ export const MenuRoot: MenuRootComponent = ChakraMenu.Root
  * @returns {React.ReactElement} The rendered MenuContent component.
  */
 export const MenuContent: MenuContentComponent = React.memo(
-  React.forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(props, ref): React.ReactElement {
+  React.forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(
+    props: MenuContentProps,
+    ref: React.Ref<HTMLDivElement>,
+  ): React.ReactElement {
     const { portalled = true, portalRef, ...rest } = props
     return (
       <Portal disabled={!portalled} container={portalRef}>
@@ -153,7 +164,10 @@ export const MenuContent: MenuContentComponent = React.memo(
  * @returns {React.ReactElement} The rendered MenuArrow component.
  */
 export const MenuArrow: MenuArrowComponent = React.memo(
-  React.forwardRef<HTMLDivElement, ChakraMenu.ArrowProps>(function MenuArrow(props, ref): React.ReactElement {
+  React.forwardRef<HTMLDivElement, ChakraMenu.ArrowProps>(function MenuArrow(
+    props: MenuArrowProps,
+    ref: React.Ref<HTMLDivElement>,
+  ): React.ReactElement {
     return (
       <ChakraMenu.Arrow ref={ref} {...props}>
         <ChakraMenu.ArrowTip />
@@ -169,20 +183,21 @@ export const MenuArrow: MenuArrowComponent = React.memo(
  * @returns {React.ReactElement} The rendered MenuCheckboxItem component.
  */
 export const MenuCheckboxItem: MenuCheckboxItemComponent = React.memo(
-  React.forwardRef<HTMLDivElement, ChakraMenu.CheckboxItemProps>(
-    function MenuCheckboxItem(props, ref): React.ReactElement {
-      return (
-        <ChakraMenu.CheckboxItem ps="8" ref={ref} {...props}>
-          <AbsoluteCenter axis="horizontal" insetStart="4" asChild>
-            <ChakraMenu.ItemIndicator>
-              <LuCheck />
-            </ChakraMenu.ItemIndicator>
-          </AbsoluteCenter>
-          {props.children}
-        </ChakraMenu.CheckboxItem>
-      )
-    },
-  ),
+  React.forwardRef<HTMLDivElement, ChakraMenu.CheckboxItemProps>(function MenuCheckboxItem(
+    props: MenuCheckboxItemProps,
+    ref: React.Ref<HTMLDivElement>,
+  ): React.ReactElement {
+    return (
+      <ChakraMenu.CheckboxItem ps="8" ref={ref} {...props}>
+        <AbsoluteCenter axis="horizontal" insetStart="4" asChild>
+          <ChakraMenu.ItemIndicator>
+            <LuCheck />
+          </ChakraMenu.ItemIndicator>
+        </AbsoluteCenter>
+        {props.children}
+      </ChakraMenu.CheckboxItem>
+    )
+  }),
 )
 
 /**
@@ -192,7 +207,10 @@ export const MenuCheckboxItem: MenuCheckboxItemComponent = React.memo(
  * @returns {React.ReactElement} The rendered MenuRadioItem component.
  */
 export const MenuRadioItem: MenuRadioItemComponent = React.memo(
-  React.forwardRef<HTMLDivElement, ChakraMenu.RadioItemProps>(function MenuRadioItem(props, ref): React.ReactElement {
+  React.forwardRef<HTMLDivElement, ChakraMenu.RadioItemProps>(function MenuRadioItem(
+    props: MenuRadioItemProps,
+    ref: React.Ref<HTMLDivElement>,
+  ): React.ReactElement {
     const { children, ...rest } = props
     return (
       <ChakraMenu.RadioItem ps="8" ref={ref} {...rest}>
@@ -214,9 +232,14 @@ export const MenuRadioItem: MenuRadioItemComponent = React.memo(
  * @returns {React.ReactElement} The rendered MenuItemGroup component.
  */
 export const MenuItemGroup: MenuItemGroupComponent = React.memo(
-  React.forwardRef<HTMLDivElement, ChakraMenu.ItemGroupProps>(function MenuItemGroup(props, ref): React.ReactElement {
+  React.forwardRef<HTMLDivElement, ChakraMenu.ItemGroupProps>(function MenuItemGroup(
+    props: MenuItemGroupProps,
+    ref: React.Ref<HTMLDivElement>,
+  ): React.ReactElement {
     const { title, children, ...rest } = props
-    const label = title ? <ChakraMenu.ItemGroupLabel userSelect="none">{title}</ChakraMenu.ItemGroupLabel> : null
+    const label: React.ReactElement | null = title ? (
+      <ChakraMenu.ItemGroupLabel userSelect="none">{title}</ChakraMenu.ItemGroupLabel>
+    ) : null
     return (
       <ChakraMenu.ItemGroup ref={ref} {...rest}>
         {label}
@@ -233,7 +256,10 @@ export const MenuItemGroup: MenuItemGroupComponent = React.memo(
  * @returns {React.ReactElement} The rendered MenuTriggerItem component.
  */
 export const MenuTriggerItem: MenuTriggerItemComponent = React.memo(
-  React.forwardRef<HTMLDivElement, MenuTriggerItemProps>(function MenuTriggerItem(props, ref): React.ReactElement {
+  React.forwardRef<HTMLDivElement, MenuTriggerItemProps>(function MenuTriggerItem(
+    props: MenuTriggerItemProps,
+    ref: React.Ref<HTMLDivElement>,
+  ): React.ReactElement {
     const { startIcon, children, ...rest } = props
     return (
       <ChakraMenu.TriggerItem ref={ref} {...rest}>
