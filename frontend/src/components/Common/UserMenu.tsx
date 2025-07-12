@@ -8,6 +8,7 @@
 
 import { Box, Button, Flex, Text } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
+import type React from "react"
 import type { FC } from "react"
 import { FaUserAstronaut } from "react-icons/fa"
 import { FiLogOut, FiUser } from "react-icons/fi"
@@ -31,7 +32,7 @@ type UserMenuProps = Record<string, never>
  * UserMenu component for rendering user dropdown menu.
  * @returns {React.ReactElement} The rendered UserMenu component.
  */
-const UserMenu: FC<UserMenuProps> = () => {
+const UserMenu: FC<UserMenuProps> = (): React.ReactElement => {
   const { user, logout } = useAuth()
 
   /**
