@@ -10,7 +10,7 @@
  * Interface for the onCancel handler used in CancelablePromise.
  * @interface OnCancel
  */
-interface OnCancel {
+export interface OnCancel {
   /** Indicates if the promise has been resolved. */
   readonly isResolved: boolean
   /** Indicates if the promise has been rejected. */

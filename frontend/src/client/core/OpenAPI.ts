@@ -81,6 +81,14 @@ export class Interceptors<T> {
   clear(): void {
     this._fns = []
   }
+
+  /**
+   * Returns the array of middleware functions.
+   * @returns {Middleware<T>[]} The middleware functions.
+   */
+  getMiddleware(): Middleware<T>[] {
+    return this._fns
+  }
 }
 
 /**
