@@ -15,10 +15,7 @@ import { vi } from "vitest"
 
 /**
  * Mocks `window.matchMedia` for the JSDOM environment.
- * This is necessary because JSDOM, the environment Vitest uses for tests, does not
- * implement this browser API. Many UI libraries, including Chakra UI, rely on it
- * to detect user preferences like OS color scheme (dark/light mode). Without this
- * mock, tests for components that use such features would fail.
+ * @description Necessary because JSDOM does not implement this browser API.
  */
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -26,8 +23,8 @@ Object.defineProperty(window, "matchMedia", {
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // Deprecated, but added for legacy compatibility
-    removeListener: vi.fn(), // Deprecated, but added for legacy compatibility
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -36,24 +33,23 @@ Object.defineProperty(window, "matchMedia", {
 
 /**
  * Globally mocks the `@chakra-ui/react` library for all tests.
- *
- * This mock is crucial and solves three fundamental problems when testing
- * Chakra UI components in a JSDOM environment:
- * 1. Hoisting Issues: `vi.mock` is called at the top level, allowing Vitest to
- *    correctly hoist it before any imports occur.
- * 2. CSS Parsing Errors: The mock provides a simple `ChakraProvider` that does
- *    not inject any CSS, bypassing JSDOM's inability to parse modern CSS syntax
- *    like `@layer`.
- * 3. Context Errors: Components that rely on Chakra's context (like `useTheme`)
- *    are replaced with simple, "dumb" versions that do not use `useContext`,
- *    preventing "context is undefined" errors.
+ * @description Provides mocks to avoid CSS parsing and context errors in JSDOM.
  */
 vi.mock("@chakra-ui/react", () => ({
   ChakraProvider: ({ children }: { children: ReactNode }): React.ReactElement => <>{children}</>,
   AbsoluteCenter: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
     <div data-testid="absolute-center" {...props} />
   ),
-  Span: (props: ComponentPropsWithoutRef<"span">): React.ReactElement => <span {...props} />,
+  Span: React.forwardRef<HTMLSpanElement, ComponentPropsWithoutRef<"span">>(
+    (
+      {
+        colorPalette,
+        colorScheme,
+        ...props
+      }: ComponentPropsWithoutRef<"span"> & { colorPalette?: string; colorScheme?: string },
+      ref: ForwardedRef<HTMLSpanElement>,
+    ): React.ReactElement => <span data-testid="span" ref={ref} {...props} />,
+  ),
   Spinner: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
     <div role="status" data-testid="spinner" {...props} />
   ),
@@ -63,9 +59,10 @@ vi.mock("@chakra-ui/react", () => ({
     ),
   ),
   IconButton: React.forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button">>(
-    (props: ComponentPropsWithoutRef<"button">, ref: ForwardedRef<HTMLButtonElement>): React.ReactElement => (
-      <button data-testid="icon-button" ref={ref} {...props} />
-    ),
+    (
+      { boxSize, ...props }: ComponentPropsWithoutRef<"button"> & { boxSize?: string },
+      ref: ForwardedRef<HTMLButtonElement>,
+    ): React.ReactElement => <button data-testid="icon-button" ref={ref} data-box-size={boxSize} {...props} />,
   ),
   Checkbox: {
     Root: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
@@ -87,7 +84,9 @@ vi.mock("@chakra-ui/react", () => ({
       <span data-testid="checkbox-label" {...props} />
     ),
   },
-  // Provides a dummy function for `defineRecipe` so that imports in files
-  // like `theme.tsx` do not fail, even if they are not directly used in a test.
+  ClientOnly: ({ children }: { children: ReactNode; fallback?: ReactNode }): React.ReactElement => <>{children}</>,
+  Skeleton: ({ boxSize, ...props }: ComponentPropsWithoutRef<"div"> & { boxSize?: string }): React.ReactElement => (
+    <div data-testid="skeleton" data-box-size={boxSize} {...props} />
+  ),
   defineRecipe: vi.fn(() => ({})),
 }))
