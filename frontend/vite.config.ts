@@ -9,47 +9,29 @@
 import path from "node:path"
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin"
 import react from "@vitejs/plugin-react-swc"
-import { defineConfig, mergeConfig } from "vite"
+import { type UserConfig, defineConfig, mergeConfig } from "vite"
 import { configDefaults, defineConfig as defineVitestConfig } from "vitest/config"
 
 /**
  * Base Vite configuration for development and production builds.
- * It defines shared settings like path aliases and plugins.
- * @type {import('vite').UserConfig}
  */
-const viteConfig: import("vite").UserConfig = defineConfig({
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
+const viteConfig: UserConfig = defineConfig({
+  resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
   plugins: [react(), TanStackRouterVite()],
   // Production build configuration
-  build: {
-    minify: true,
-  },
+  build: { minify: true },
 })
 
 /**
  * Vitest-specific configuration for the test environment.
- * This setup enables a JSDOM environment, specifies setup files, and configures
- * `server.deps.inline` to prevent CSS parsing errors with UI libraries.
- * @type {import('vitest/config').UserConfig}
  */
-const vitestConfig: import("vitest/config").UserConfig = defineVitestConfig({
+const vitestConfig: UserConfig = defineVitestConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: "./tests/setupTests.ts",
+    setupFiles: "./tests/setupTests.tsx",
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
-    // REFACTOR: Use the new, correct configuration key `server.deps.inline`
-    // as recommended by the Vitest deprecation warning. This resolves the
-    // "Could not parse CSS" errors by forcing Vitest to transform these libraries.
-    server: {
-      deps: {
-        inline: [/@chakra-ui\/.*/, /@emotion\/.*/],
-      },
-    },
+    server: { deps: { inline: [/@chakra-ui\/.*/, /@emotion\/.*/] } },
     coverage: {
       ...configDefaults.coverage,
       provider: "v8",
