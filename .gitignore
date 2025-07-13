@@ -250,3 +250,7 @@ cython_debug/
 # Vite
 .vite
 frontend/coverage
+
+# TanStack Router
+routeTree.gen.ts
+
