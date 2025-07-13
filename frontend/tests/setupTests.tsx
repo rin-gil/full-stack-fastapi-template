@@ -62,6 +62,11 @@ vi.mock("@chakra-ui/react", () => ({
       <button ref={ref} {...props} />
     ),
   ),
+  IconButton: React.forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button">>(
+    (props: ComponentPropsWithoutRef<"button">, ref: ForwardedRef<HTMLButtonElement>): React.ReactElement => (
+      <button data-testid="icon-button" ref={ref} {...props} />
+    ),
+  ),
   Checkbox: {
     Root: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
       <div data-testid="checkbox-root" {...props} />
