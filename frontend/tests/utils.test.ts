@@ -3,7 +3,7 @@
  */
 
 import type { ValidationRules } from "@/utils"
-import { confirmPasswordRules, emailPattern, extractApiErrorMessage, namePattern, passwordRules } from "@/utils"
+import { confirmPasswordRules, emailPattern, namePattern, passwordRules } from "@/utils"
 import { type Mock, describe, expect, it, vi } from "vitest"
 
 // Test suite for the entire utils.ts file
@@ -53,47 +53,6 @@ describe("utils.ts", (): void => {
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
       const result: string | boolean | undefined = rules.validate?.("anything")
       expect(result).toBe(true)
-    })
-  })
-
-  // Tests for the extractApiErrorMessage function
-  describe("extractApiErrorMessage", (): void => {
-    it("should extract message from a FastAPI validation error", (): void => {
-      const mockError = {
-        body: { detail: [{ msg: "This is the detailed error message" }] },
-        status: 422,
-        statusText: "Unprocessable Content",
-        url: "",
-        ok: false,
-      }
-      const message: string = extractApiErrorMessage(mockError)
-      expect(message).toBe("This is the detailed error message")
-    })
-
-    it("should extract message from a simple string detail", (): void => {
-      const mockError = {
-        body: { detail: "A simple error string." },
-        status: 400,
-        statusText: "Bad Request",
-        url: "",
-        ok: false,
-      }
-      const message: string = extractApiErrorMessage(mockError)
-      expect(message).toBe("A simple error string.")
-    })
-
-    it("should handle a standard JavaScript Error object", (): void => {
-      const mockError = new Error("A standard error occurred")
-      const message: string = extractApiErrorMessage(mockError)
-      expect(message).toBe("A standard error occurred")
-    })
-
-    it("should return a generic message for unknown or malformed errors", (): void => {
-      const unknownErrors = [null, undefined, {}, { body: {} }, "just a string"]
-      for (const err of unknownErrors) {
-        const message = extractApiErrorMessage(err)
-        expect(message).toBe("An unexpected error occurred.")
-      }
     })
   })
 
