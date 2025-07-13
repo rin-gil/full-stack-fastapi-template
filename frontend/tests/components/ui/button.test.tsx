@@ -9,7 +9,7 @@
 // region Imports
 import { Button } from "@/components/ui/button"
 import { render, screen } from "@testing-library/react"
-import { createRef } from "react"
+import { type RefObject, createRef } from "react"
 import { describe, expect, it } from "vitest"
 // endregion
 
@@ -22,7 +22,7 @@ describe("Button", (): void => {
    */
   it("renders children correctly", (): void => {
     render(<Button>Click me</Button>)
-    const button = screen.getByRole("button", { name: /click me/i })
+    const button: HTMLElement = screen.getByRole("button", { name: /click me/i })
     expect(button).toBeInTheDocument()
     expect(button).not.toBeDisabled()
   })
@@ -69,7 +69,7 @@ describe("Button", (): void => {
    * native HTML button element.
    */
   it("forwards ref to the underlying button element", (): void => {
-    const ref = createRef<HTMLButtonElement>()
+    const ref: RefObject<HTMLButtonElement> = createRef<HTMLButtonElement>()
     render(<Button ref={ref}>Click me</Button>)
     expect(ref.current).toBeInstanceOf(HTMLButtonElement)
   })
