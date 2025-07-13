@@ -21,4 +21,5 @@ export const configureApi = (): void => {
     }
   }
 }
+
 configureApi()
