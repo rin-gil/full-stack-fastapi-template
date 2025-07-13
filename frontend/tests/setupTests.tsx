@@ -39,14 +39,14 @@ Object.defineProperty(window, "matchMedia", {
  *
  * This mock is crucial and solves three fundamental problems when testing
  * Chakra UI components in a JSDOM environment:
- * 1.  **Hoisting Issues:** `vi.mock` is called at the top level, allowing Vitest to
- *     correctly hoist it before any imports occur.
- * 2.  **CSS Parsing Errors:** The mock provides a simple `ChakraProvider` that does
- *     not inject any CSS, bypassing JSDOM's inability to parse modern CSS syntax
- *     like `@layer`.
- * 3.  **Context Errors:** Components that rely on Chakra's context (like `useTheme`)
- *     are replaced with simple, "dumb" versions that do not use `useContext`,
- *     preventing "context is undefined" errors.
+ * 1. Hoisting Issues: `vi.mock` is called at the top level, allowing Vitest to
+ *    correctly hoist it before any imports occur.
+ * 2. CSS Parsing Errors: The mock provides a simple `ChakraProvider` that does
+ *    not inject any CSS, bypassing JSDOM's inability to parse modern CSS syntax
+ *    like `@layer`.
+ * 3. Context Errors: Components that rely on Chakra's context (like `useTheme`)
+ *    are replaced with simple, "dumb" versions that do not use `useContext`,
+ *    preventing "context is undefined" errors.
  */
 vi.mock("@chakra-ui/react", () => ({
   ChakraProvider: ({ children }: { children: ReactNode }): React.ReactElement => <>{children}</>,
@@ -62,6 +62,26 @@ vi.mock("@chakra-ui/react", () => ({
       <button ref={ref} {...props} />
     ),
   ),
+  Checkbox: {
+    Root: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
+      <div data-testid="checkbox-root" {...props} />
+    ),
+    HiddenInput: React.forwardRef<HTMLInputElement, ComponentPropsWithoutRef<"input">>(
+      (props: ComponentPropsWithoutRef<"input">, ref: ForwardedRef<HTMLInputElement>): React.ReactElement => (
+        <input type="checkbox" data-testid="checkbox-input" ref={ref} {...props} />
+      ),
+    ),
+    Control: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
+      <div data-testid="checkbox-control" {...props} />
+    ),
+    Indicator: (props: ComponentPropsWithoutRef<"div">): React.ReactElement => (
+      <div data-testid="checkbox-indicator" {...props} />
+    ),
+    // Replace <label> with <span> to remove the requirement for association with input.
+    Label: (props: ComponentPropsWithoutRef<"span">): React.ReactElement => (
+      <span data-testid="checkbox-label" {...props} />
+    ),
+  },
   // Provides a dummy function for `defineRecipe` so that imports in files
   // like `theme.tsx` do not fail, even if they are not directly used in a test.
   defineRecipe: vi.fn(() => ({})),
