@@ -1,5 +1,5 @@
 /**
- * @file Tests for the CloseButton component.
+ * @file Tests for src/components/ui/close-button.tsx
  * @description These are unit tests for the custom `CloseButton` component. They verify
  * its rendering, default icon, custom children, aria-label, disabled state, ref forwarding,
  * and prop passing in a mocked environment.

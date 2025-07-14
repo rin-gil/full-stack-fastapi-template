@@ -1,5 +1,5 @@
 /**
- * @file Tests for the Dialog module.
+ * @file Tests for src/components/ui/dialog.tsx
  * @description Unit tests for Dialog components, verifying rendering, functionality,
  * and behavior of DialogRoot, DialogTrigger, DialogContent, DialogCloseTrigger,
  * DialogFooter, DialogHeader, DialogBody, DialogTitle, DialogDescription,

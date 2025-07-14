@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 /**
- * @file Tests for the ColorMode module.
+ * @file Tests for src/components/ui/color-mode.tsx
  * @description These are unit tests for the ColorMode components and hooks. They verify
  * the rendering of ColorModeProvider, functionality of useColorMode hook, ColorModeButton,
  * and ColorModeWrapper in a mocked environment.

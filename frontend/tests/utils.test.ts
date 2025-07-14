@@ -1,92 +1,113 @@
 /**
- * @file Unit tests for the src/utils.ts module.
+ * @file Tests for src/utils.ts
+ * @description Tests validation functions for password, confirm password, name, and email patterns.
+ * @module UtilsTests
  */
 
-import type { ValidationRules } from "@/utils"
-import { confirmPasswordRules, emailPattern, namePattern, passwordRules } from "@/utils"
-import { type Mock, describe, expect, it, vi } from "vitest"
+import { type ValidationRules, confirmPasswordRules, emailPattern, namePattern, passwordRules } from "@/utils"
+import { describe, expect, it, vi } from "vitest"
+import type { Mock } from "vitest"
 
-// Test suite for the entire utils.ts file
-describe("utils.ts", (): void => {
-  // Tests for the passwordRules function
+// region Type aliases
+type ValidationResult = string | boolean | undefined
+type StringArray = string[]
+
+// endregion
+
+// region Tests
+/**
+ * Test suite for utility functions.
+ */
+describe("Utils Module", (): void => {
+  /**
+   * Tests for the passwordRules function.
+   */
   describe("passwordRules", (): void => {
-    it("should return rules with a required message by default", (): void => {
+    it("should return rules with required message by default", (): void => {
       const rules: ValidationRules = passwordRules()
       expect(rules.required).toBe("Password is required")
       expect(rules.minLength?.value).toBe(8)
     })
 
-    it("should return rules without a required message when isRequired is false", (): void => {
+    it("should return rules without required message when isRequired is false", (): void => {
       const rules: ValidationRules = passwordRules(false)
       expect(rules.required).toBeUndefined()
       expect(rules.minLength?.value).toBe(8)
     })
   })
 
-  // Tests for the confirmPasswordRules function
+  /**
+   * Tests for the confirmPasswordRules function.
+   */
   describe("confirmPasswordRules", (): void => {
     const getValuesMock: Mock = vi.fn()
 
     it("should return true when passwords match", (): void => {
       getValuesMock.mockReturnValue({ password: "password123" })
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined = rules.validate?.("password123")
+      const result: ValidationResult = rules.validate?.("password123")
       expect(result).toBe(true)
     })
 
-    it("should return an error message when passwords do not match", (): void => {
+    it("should return error message when passwords do not match", (): void => {
       getValuesMock.mockReturnValue({ password: "password123" })
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined = rules.validate?.("wrongpassword")
+      const result: ValidationResult = rules.validate?.("wrongpassword")
       expect(result).toBe("The passwords do not match")
     })
 
-    it("should correctly use new_password if password field is not present", (): void => {
+    it("should use new_password if password field is absent", (): void => {
       getValuesMock.mockReturnValue({ new_password: "newpassword123" })
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined = rules.validate?.("newpassword123")
+      const result: ValidationResult = rules.validate?.("newpassword123")
       expect(result).toBe(true)
     })
 
-    it("should return true if the base password is not yet entered", (): void => {
-      getValuesMock.mockReturnValue({}) // The form is empty
+    it("should return true if base password is not yet entered", (): void => {
+      getValuesMock.mockReturnValue({})
       const rules: ValidationRules = confirmPasswordRules(getValuesMock)
-      const result: string | boolean | undefined = rules.validate?.("anything")
+      const result: ValidationResult = rules.validate?.("anything")
       expect(result).toBe(true)
     })
   })
 
-  // Tests for namePattern
-  describe("namePattern", (): void => {
+  /**
+   * Tests for the namePattern constant.
+   */
+  describe("namePattern", () => {
     it("should match valid names", (): void => {
-      const validNames: string[] = ["John Doe", "John", "John-Doe", "Joe"]
+      const validNames: StringArray = ["John Doe", "John", "John-Doe", "Joe"]
       for (const name of validNames) {
         expect(name).toMatch(namePattern.value)
       }
     })
 
     it("should not match invalid names", (): void => {
-      const invalidNames: string[] = [" admin", "admin ", "admin2", "Admin-", "Admin'"]
+      const invalidNames: StringArray = [" admin", "admin ", "admin2", "Admin-", "Admin'"]
       for (const name of invalidNames) {
         expect(name).not.toMatch(namePattern.value)
       }
     })
   })
 
-  // Tests for emailPattern
+  /**
+   * Tests for the emailPattern constant.
+   */
   describe("emailPattern", (): void => {
     it("should match valid email addresses", (): void => {
-      const validEmails: string[] = ["test@example.com", "test.name@example.co.uk"]
+      const validEmails: StringArray = ["test@example.com", "test.name@example.co.uk"]
       for (const email of validEmails) {
         expect(email).toMatch(emailPattern.value)
       }
     })
 
     it("should not match invalid email addresses", (): void => {
-      const invalidEmails: string[] = ["test", "test@", "test@example", "test@.com"]
+      const invalidEmails: StringArray = ["test", "test@", "test@example", "test@.com"]
       for (const email of invalidEmails) {
         expect(email).not.toMatch(emailPattern.value)
       }
     })
   })
 })
+
+// endregion

@@ -1,5 +1,5 @@
 /**
- * @file Tests for the Checkbox component.
+ * @file Tests for src/components/ui/checkbox.tsx
  * @description These are unit tests for the custom `Checkbox` component. They verify
  * its rendering, state handling (checked, disabled), custom icon support, input props,
  * ref forwarding, and prop passing in a mocked environment.

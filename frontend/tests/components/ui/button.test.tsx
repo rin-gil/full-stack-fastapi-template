@@ -1,5 +1,5 @@
 /**
- * @file Tests for the Button component.
+ * @file Tests for src/components/ui/button.tsx
  * @description These are unit tests for the custom `Button` component. They verify
  * its rendering, state handling (loading, disabled), ref forwarding, and prop passing
  * in a mocked environment.
