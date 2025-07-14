@@ -6,7 +6,7 @@ bcrypt==3.2.2
 email-validator==2.2.0
 fastapi-mail==1.5.0
 fastapi-utils==0.8.0
-fastapi==0.115.14
+fastapi==0.116.1
 loguru==0.7.3
 passlib==1.7.4
 pydantic-settings==2.10.1
