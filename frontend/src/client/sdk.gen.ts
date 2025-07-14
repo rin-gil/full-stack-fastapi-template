@@ -67,10 +67,16 @@ import type {
 export const loginLoginRouterLoginAccessToken = (
   data: LoginLoginRouterLoginAccessTokenData,
 ): CancelablePromise<LoginLoginRouterLoginAccessTokenResponse> => {
+  const filteredFormData = Object.fromEntries(
+    Object.entries(data.formData).filter(
+      ([, value]: [string, string | null]): boolean => value !== null && value !== undefined,
+    ),
+  ) as Record<string, string>
+
   return __request(OpenAPI, {
     method: "POST",
     url: "/api/v1/login/access-token",
-    formData: data.formData,
+    formData: filteredFormData,
     mediaType: "application/x-www-form-urlencoded",
     errors: { 422: "Validation Error" },
   })
