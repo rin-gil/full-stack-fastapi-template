@@ -19,7 +19,7 @@ import {
 import * as React from "react"
 import type { ForwardedRef, MouseEventHandler } from "react"
 import { HiChevronLeft, HiChevronRight, HiMiniEllipsisHorizontal } from "react-icons/hi2"
-import { LinkButton } from "./link-button"
+import { LinkButton, type LinkButtonProps } from "./link-button"
 
 // region Type Aliases
 
@@ -297,8 +297,8 @@ const PaginationItemComponent: PaginationItemComponent = React.forwardRef<HTMLBu
       const itemHref: string = getHref(restProps.value)
       return (
         <LinkButton
-          href={itemHref}
-          variant={variant}
+          to={itemHref}
+          variant={variant as LinkButtonProps["variant"]}
           size={size}
           onMouseDown={onMouseDown as MouseEventHandler<HTMLAnchorElement>}
         >
@@ -337,8 +337,8 @@ const PaginationPrevTriggerComponent: PaginationTriggerComponent = React.forward
     const href: string = getHref(previousPage)
     return (
       <LinkButton
-        href={href}
-        variant={variantMap.default}
+        to={href}
+        variant={variantMap.default as LinkButtonProps["variant"]}
         size={size}
         onMouseDown={onMouseDown as MouseEventHandler<HTMLAnchorElement>}
       >
@@ -376,8 +376,8 @@ const PaginationNextTriggerComponent: PaginationTriggerComponent = React.forward
     const href: string = getHref(nextPage)
     return (
       <LinkButton
-        href={href}
-        variant={variantMap.default}
+        to={href}
+        variant={variantMap.default as LinkButtonProps["variant"]}
         size={size}
         onMouseDown={onMouseDown as MouseEventHandler<HTMLAnchorElement>}
       >
