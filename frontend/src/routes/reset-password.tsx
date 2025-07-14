@@ -19,7 +19,9 @@ import type { SubmitHandler } from "react-hook-form"
 import { useForm } from "react-hook-form"
 import { FiLock } from "react-icons/fi"
 
-import { type ApiError, type NewPassword, loginLoginRouterResetPassword } from "@/client"
+import { type ApiError, ApiError as ApiErrorClass, type NewPassword, loginLoginRouterResetPassword } from "@/client"
+import type { ApiRequestOptions } from "@/client/core/ApiRequestOptions"
+import type { ApiResult } from "@/client/core/ApiResult"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/ui/password-input"
 import { isLoggedIn } from "@/hooks/useAuth"
@@ -91,15 +93,17 @@ const ResetPassword: ResetPasswordComponent = (): ReactElement => {
    */
   const onSubmit: SubmitHandler<NewPasswordForm> = (data: NewPasswordForm): void => {
     if (!token) {
-      void showApiErrorToast({
-        message: "No password reset token found in URL.",
+      const fakeRequest: ApiRequestOptions = { method: "POST", url: "/api/v1/reset-password/" }
+      const fakeResponse: ApiResult = {
+        ok: false,
         status: 400,
-        url: window.location.href,
         statusText: "Bad Request",
+        url: window.location.href,
         body: { detail: "No password reset token found in URL." },
-        request: { method: "POST", url: window.location.href },
-        name: "ApiError",
-      })
+      }
+
+      const error = new ApiErrorClass(fakeRequest, fakeResponse, "Client-side validation error")
+      void showApiErrorToast(error)
       return
     }
     const { confirm_password, ...newPasswordData } = data
