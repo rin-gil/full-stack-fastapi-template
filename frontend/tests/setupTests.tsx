@@ -70,6 +70,29 @@ type CloseButtonProps = {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
 } & ComponentPropsWithoutRef<"button">
 
+/** Props for ChakraField components */
+type ChakraFieldRootProps = {
+  children: ReactNode
+  ref?: ForwardedRef<HTMLDivElement>
+} & ComponentPropsWithoutRef<"div">
+
+type ChakraFieldLabelProps = {
+  children: ReactNode
+  htmlFor?: string
+} & ComponentPropsWithoutRef<"label">
+
+type ChakraFieldHelperTextProps = {
+  children: ReactNode
+} & ComponentPropsWithoutRef<"div">
+
+type ChakraFieldErrorTextProps = {
+  children: ReactNode
+} & ComponentPropsWithoutRef<"div">
+
+type ChakraFieldRequiredIndicatorProps = {
+  fallback?: ReactNode
+} & ComponentPropsWithoutRef<"span">
+
 /** Dialog context type */
 type DialogContextType = {
   onClose: () => void
@@ -118,6 +141,7 @@ const mockChakraUI = (): void => {
     const ThemeContext = createContext({ theme: { _config: {} } })
 
     // region Mock Components
+
     const CloseButton = React.forwardRef<HTMLButtonElement, CloseButtonProps>(
       (
         { children, size, onClick, ...props }: CloseButtonProps,
@@ -266,6 +290,38 @@ const mockChakraUI = (): void => {
       },
     )
 
+    const FieldRoot = React.forwardRef<HTMLDivElement, ChakraFieldRootProps>(
+      ({ children, ...props }: ChakraFieldRootProps, ref: ForwardedRef<HTMLDivElement>): React.ReactElement => (
+        <div data-testid="field-root" ref={ref} {...props}>
+          {children}
+        </div>
+      ),
+    )
+
+    const FieldLabel = ({ children, htmlFor, ...props }: ChakraFieldLabelProps): React.ReactElement => (
+      <label data-testid="field-label" htmlFor={htmlFor} {...props}>
+        {children}
+      </label>
+    )
+
+    const FieldHelperText = ({ children, ...props }: ChakraFieldHelperTextProps): React.ReactElement => (
+      <div data-testid="field-helper-text" {...props}>
+        {children}
+      </div>
+    )
+
+    const FieldErrorText = ({ children, ...props }: ChakraFieldErrorTextProps): React.ReactElement => (
+      <div data-testid="field-error-text" {...props}>
+        {children}
+      </div>
+    )
+
+    const FieldRequiredIndicator = ({ fallback, ...props }: ChakraFieldRequiredIndicatorProps): React.ReactElement => (
+      <span data-testid="field-required-indicator" {...props}>
+        {fallback || "*"}
+      </span>
+    )
+
     // endregion
 
     return {
@@ -290,6 +346,13 @@ const mockChakraUI = (): void => {
           </div>
         ),
       CloseButton,
+      Field: {
+        Root: FieldRoot,
+        Label: FieldLabel,
+        HelperText: FieldHelperText,
+        ErrorText: FieldErrorText,
+        RequiredIndicator: FieldRequiredIndicator,
+      },
       Dialog: {
         Root: ({ children, defaultOpen, open, onOpenChange, ...props }: DialogRootProps): React.ReactElement => {
           const [isOpen, setIsOpen] = useState(defaultOpen ?? open ?? false)
@@ -429,7 +492,7 @@ const mockChakraUI = (): void => {
           const [isOpen, setIsOpen] = useState(defaultOpen ?? open ?? false)
           const isControlled = open !== undefined
           const effectiveOpen = isControlled ? open : isOpen
-          const handleOpenChange = (newOpen: boolean) => {
+          const handleOpenChange = (newOpen: boolean): void => {
             if (!isControlled) setIsOpen(newOpen)
             onOpenChange?.({ open: newOpen })
           }
@@ -438,9 +501,7 @@ const mockChakraUI = (): void => {
             <div data-testid="drawer-root" {...props}>
               <DialogContext.Provider value={{ onClose: () => handleOpenChange(false), isOpen: effectiveOpen }}>
                 {React.Children.map(children, (child) => {
-                  if (!React.isValidElement(child)) {
-                    return child
-                  }
+                  if (!React.isValidElement(child)) return child
                   const childType =
                     typeof child.type !== "string" && "displayName" in child.type ? child.type.displayName : undefined
                   if (childType === "DrawerTrigger") {
@@ -478,9 +539,7 @@ const mockChakraUI = (): void => {
                       </DialogCloseTrigger>
                     )
                   }
-                  if (childType === "DrawerContent" && !effectiveOpen) {
-                    return null
-                  }
+                  if (childType === "DrawerContent" && !effectiveOpen) return null
                   return child
                 })}
               </DialogContext.Provider>
