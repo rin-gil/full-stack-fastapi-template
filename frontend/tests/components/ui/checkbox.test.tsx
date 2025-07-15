@@ -9,10 +9,52 @@
 // region Imports
 import { Checkbox } from "@/components/ui/checkbox"
 import { render, screen } from "@testing-library/react"
-import { type RefObject, createRef } from "react"
+import React, { type RefObject, createRef } from "react"
 import { FaCheck } from "react-icons/fa"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
+// endregion
 
+// region Mocks
+/**
+ * Mocks the required components from `@chakra-ui/react` for Checkbox tests.
+ *
+ * NOTE: The mock factory is hoisted by Vitest and runs before other module code.
+ * To avoid issues with undefined variables, all dependencies (like React)
+ * must be imported *inside* the factory.
+ */
+vi.mock("@chakra-ui/react", async () => {
+  const React = await import("react")
+  const actual = await vi.importActual<typeof import("@chakra-ui/react")>("@chakra-ui/react")
+
+  const ThemeContext = React.createContext({ theme: { _config: {} } })
+
+  return {
+    ...actual,
+    ChakraProvider: ({ children }: { children: React.ReactNode }): React.ReactElement => (
+      <ThemeContext.Provider value={{ theme: { _config: {} } }}>{children}</ThemeContext.Provider>
+    ),
+    Checkbox: {
+      Root: (props: React.ComponentPropsWithoutRef<"div">): React.ReactElement => (
+        <div data-testid="checkbox-root" {...props} />
+      ),
+      HiddenInput: React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<"input">>(
+        (
+          props: React.ComponentPropsWithoutRef<"input">,
+          ref: React.ForwardedRef<HTMLInputElement>,
+        ): React.ReactElement => <input type="checkbox" data-testid="checkbox-input" ref={ref} {...props} />,
+      ),
+      Control: (props: React.ComponentPropsWithoutRef<"div">): React.ReactElement => (
+        <div data-testid="checkbox-control" {...props} />
+      ),
+      Indicator: (props: React.ComponentPropsWithoutRef<"div">): React.ReactElement => (
+        <div data-testid="checkbox-indicator" {...props} />
+      ),
+      Label: (props: React.ComponentPropsWithoutRef<"span">): React.ReactElement => (
+        <span data-testid="checkbox-label" {...props} />
+      ),
+    },
+  }
+})
 // endregion
 
 // region Tests

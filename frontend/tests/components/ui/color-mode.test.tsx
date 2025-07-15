@@ -23,7 +23,6 @@ import type React from "react"
 import { type RefObject, createRef } from "react"
 import type { Dispatch, SetStateAction } from "react"
 import { describe, expect, it, vi } from "vitest"
-
 // endregion
 
 // region Type Aliases
@@ -40,6 +39,38 @@ vi.mock("next-themes", () => ({
   useTheme: vi.fn(),
 }))
 
+/**
+ * Mocks dependencies from `@chakra-ui/react`.
+ * - The IconButton mock is updated to correctly handle the `boxSize` prop, preventing React warnings.
+ */
+vi.mock("@chakra-ui/react", async () => {
+  const React = await import("react")
+  // Correctly define types for use within the mock
+  type ComponentPropsWithoutRef<T extends React.ElementType> = React.ComponentPropsWithoutRef<T>
+  type ForwardedRef<T> = React.ForwardedRef<T>
+  type ReactNode = React.ReactNode
+
+  return {
+    ...(await vi.importActual<typeof import("@chakra-ui/react")>("@chakra-ui/react")),
+    ChakraProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    // FIX: The IconButton mock now correctly handles the `boxSize` prop to prevent warnings.
+    IconButton: React.forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button"> & { boxSize?: string }>(
+      ({ boxSize, ...rest }, ref: ForwardedRef<HTMLButtonElement>): React.ReactElement => (
+        <button ref={ref} {...rest} />
+      ),
+    ),
+    Span: React.forwardRef<
+      HTMLSpanElement,
+      ComponentPropsWithoutRef<"span"> & { colorPalette?: string; colorScheme?: string }
+    >(
+      ({ colorPalette, colorScheme, ...props }, ref: ForwardedRef<HTMLSpanElement>): React.ReactElement => (
+        <span data-testid="span" ref={ref} {...props} />
+      ),
+    ),
+    ClientOnly: ({ children }: { children: ReactNode; fallback?: ReactNode }): React.ReactElement => <>{children}</>,
+    defineRecipe: vi.fn(() => ({})),
+  }
+})
 // endregion
 
 // region Tests

@@ -4,10 +4,91 @@
  * @module FieldTests
  */
 
+// region Imports
 import { Field } from "@/components/ui/field"
 import { render, screen } from "@testing-library/react"
 import * as React from "react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
+// endregion
+
+// region Mocks
+vi.mock("@chakra-ui/react", async () => {
+  const React = await import("react")
+
+  // region Type Aliases
+  // CORRECT SYNTAX: Define types using the imported React object.
+  type ReactNode = React.ReactNode
+  type ForwardedRef<T> = React.ForwardedRef<T>
+  type ComponentPropsWithoutRef<T extends React.ElementType> = React.ComponentPropsWithoutRef<T>
+
+  type ChakraFieldRootProps = {
+    children: ReactNode
+    ref?: ForwardedRef<HTMLDivElement>
+  } & ComponentPropsWithoutRef<"div">
+
+  type ChakraFieldLabelProps = {
+    children: ReactNode
+    htmlFor?: string
+  } & ComponentPropsWithoutRef<"label">
+
+  type ChakraFieldHelperTextProps = {
+    children: ReactNode
+  } & ComponentPropsWithoutRef<"div">
+
+  type ChakraFieldErrorTextProps = {
+    children: ReactNode
+  } & ComponentPropsWithoutRef<"div">
+
+  type ChakraFieldRequiredIndicatorProps = {
+    fallback?: ReactNode
+  } & ComponentPropsWithoutRef<"span">
+  // endregion
+
+  // region Mock Components (Copied from original TestSetup)
+  const FieldRoot = React.forwardRef<HTMLDivElement, ChakraFieldRootProps>(({ children, ...props }, ref) => (
+    <div data-testid="field-root" ref={ref} {...props}>
+      {children}
+    </div>
+  ))
+
+  const FieldLabel = ({ children, htmlFor, ...props }: ChakraFieldLabelProps) => (
+    <label data-testid="field-label" htmlFor={htmlFor} {...props}>
+      {children}
+    </label>
+  )
+
+  const FieldHelperText = ({ children, ...props }: ChakraFieldHelperTextProps) => (
+    <div data-testid="field-helper-text" {...props}>
+      {children}
+    </div>
+  )
+
+  const FieldErrorText = ({ children, ...props }: ChakraFieldErrorTextProps) => (
+    <div data-testid="field-error-text" {...props}>
+      {children}
+    </div>
+  )
+
+  const FieldRequiredIndicator = ({ fallback, ...props }: ChakraFieldRequiredIndicatorProps) => (
+    <span data-testid="field-required-indicator" {...props}>
+      {fallback || "*"}
+    </span>
+  )
+  // endregion
+
+  return {
+    ...(await vi.importActual<typeof import("@chakra-ui/react")>("@chakra-ui/react")),
+    defineRecipe: vi.fn(() => ({})),
+    Field: {
+      Root: FieldRoot,
+      Label: FieldLabel,
+      HelperText: FieldHelperText,
+      ErrorText: FieldErrorText,
+      RequiredIndicator: FieldRequiredIndicator,
+    },
+  }
+})
+// endregion
 
 // region Main Code
 

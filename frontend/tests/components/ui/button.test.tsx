@@ -9,8 +9,58 @@
 // region Imports
 import { Button } from "@/components/ui/button"
 import { render, screen } from "@testing-library/react"
-import { type RefObject, createRef } from "react"
-import { describe, expect, it } from "vitest"
+import React, { type RefObject, createRef } from "react" // Оставляем только то, что нужно для тестов
+import { describe, expect, it, vi } from "vitest"
+// endregion
+
+// region Mocks
+/**
+ * Mocks the required components from `@chakra-ui/react` for Button tests.
+ * This approach isolates the test environment, ensuring that only the necessary
+ * components are mocked for this specific test suite.
+ *
+ * NOTE: The mock factory is hoisted by Vitest and runs before other module code.
+ * To avoid issues with undefined variables, all dependencies (like React)
+ * must be imported *inside* the factory.
+ */
+vi.mock("@chakra-ui/react", async () => {
+  const React = await import("react")
+  const actual = await vi.importActual<typeof import("@chakra-ui/react")>("@chakra-ui/react")
+
+  const ThemeContext = React.createContext({ theme: { _config: {} } })
+
+  return {
+    ...actual,
+    ChakraProvider: ({ children }: { children: React.ReactNode }): React.ReactElement => (
+      <ThemeContext.Provider value={{ theme: { _config: {} } }}>{children}</ThemeContext.Provider>
+    ),
+    AbsoluteCenter: (props: React.ComponentPropsWithoutRef<"div">): React.ReactElement => (
+      <div data-testid="absolute-center" {...props} />
+    ),
+    Span: React.forwardRef<HTMLSpanElement, React.ComponentPropsWithoutRef<"span">>(
+      (
+        {
+          colorPalette,
+          colorScheme,
+          ...props
+        }: React.ComponentPropsWithoutRef<"span"> & {
+          colorPalette?: string
+          colorScheme?: string
+        },
+        ref: React.ForwardedRef<HTMLSpanElement>,
+      ): React.ReactElement => <span data-testid="span" ref={ref} {...props} />,
+    ),
+    Spinner: (props: React.ComponentPropsWithoutRef<"div">): React.ReactElement => (
+      <div role="status" data-testid="spinner" {...props} />
+    ),
+    Button: React.forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<"button">>(
+      (
+        props: React.ComponentPropsWithoutRef<"button">,
+        ref: React.ForwardedRef<HTMLButtonElement>,
+      ): React.ReactElement => <button ref={ref} {...props} />,
+    ),
+  }
+})
 // endregion
 
 // region Tests

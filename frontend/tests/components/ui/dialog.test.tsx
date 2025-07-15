@@ -25,8 +25,155 @@ import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type React from "react"
 import { type ForwardedRef, type ReactNode, type RefObject, createRef, useState } from "react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
+// endregion
 
+// region Mocks
+vi.mock("@chakra-ui/react", async () => {
+  const React = await import("react")
+  const { useState, createContext, useContext } = React
+
+  // region Type Aliases (Copied EXACTLY from original TestSetup)
+  type ComponentPropsWithoutRef<T extends React.ElementType> = React.ComponentPropsWithoutRef<T>
+  type DialogRootProps = {
+    children: ReactNode
+    open?: boolean
+    onOpenChange?: (details: { open: boolean }) => void
+  } & ComponentPropsWithoutRef<"div">
+  type DialogTriggerProps = {
+    children: ReactNode
+    isOpen?: boolean
+    onOpen?: () => void
+  } & ComponentPropsWithoutRef<"button">
+  type DialogContentProps = {
+    children: ReactNode
+    portalled?: boolean
+    backdrop?: boolean
+    ref?: ForwardedRef<HTMLDivElement>
+  } & ComponentPropsWithoutRef<"div">
+  type CloseButtonProps = { children?: ReactNode } & ComponentPropsWithoutRef<"button">
+  type DialogCloseTriggerProps = {
+    children?: ReactNode
+    asChild?: boolean
+    insetEnd?: string
+    top?: string
+    position?: string
+    ref?: ForwardedRef<HTMLButtonElement>
+  } & ComponentPropsWithoutRef<"button">
+  type DialogContextType = { onClose: () => void; isOpen: boolean }
+  interface RefElement extends React.ReactElement {
+    ref?: ForwardedRef<HTMLButtonElement>
+  }
+  // endregion
+
+  const DialogContext = createContext<DialogContextType | undefined>(undefined)
+  const ThemeContext = createContext({ theme: { _config: {} } })
+
+  // region Mock Components (Copied EXACTLY from original TestSetup)
+  const MockCloseButton = React.forwardRef<HTMLButtonElement, CloseButtonProps>(({ children, ...props }, ref) => (
+    <button ref={ref} data-testid="close-button" {...props}>
+      {children}
+    </button>
+  ))
+
+  const MockDialogCloseTrigger = React.forwardRef<HTMLButtonElement, DialogCloseTriggerProps>(
+    ({ children, asChild, insetEnd, top, position, ...props }, ref) => {
+      const context = useContext(DialogContext)
+      const buttonProps = { ...props, position, top, insetend: insetEnd, "data-testid": "close-button" }
+
+      if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(children, {
+          ...buttonProps,
+          // @ts-ignore
+          ref,
+          onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+            if (children.props.onClick) children.props.onClick(e)
+            if (!e.defaultPrevented) context?.onClose?.()
+          },
+        })
+      }
+      return (
+        <MockCloseButton
+          ref={ref}
+          onClick={(e) => {
+            if (!e.defaultPrevented) context?.onClose?.()
+          }}
+          {...buttonProps}
+        >
+          {children}
+        </MockCloseButton>
+      )
+    },
+  )
+  // endregion
+
+  return {
+    ...(await vi.importActual<typeof import("@chakra-ui/react")>("@chakra-ui/react")),
+    ChakraProvider: ({ children }: { children: ReactNode }): React.ReactElement => (
+      <ThemeContext.Provider value={{ theme: { _config: {} } }}>{children}</ThemeContext.Provider>
+    ),
+    Portal: ({ children, disabled }: { children: ReactNode; disabled?: boolean }): React.ReactElement =>
+      disabled ? <>{children}</> : <div data-testid="portal">{children}</div>,
+    CloseButton: MockCloseButton,
+    IconButton: React.forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button">>(
+      (props, ref): React.ReactElement => <button data-testid="icon-button" ref={ref} {...props} />,
+    ),
+    defineRecipe: vi.fn(() => ({})),
+    Dialog: {
+      Root: ({ children, open, onOpenChange, ...props }: DialogRootProps) => {
+        const [isOpen, setIsOpen] = useState(open ?? false)
+        const isControlled = open !== undefined
+        const effectiveOpen = isControlled ? open : isOpen
+        const handleOpenChange = (newOpen: boolean) => {
+          if (!isControlled) setIsOpen(newOpen)
+          onOpenChange?.({ open: newOpen })
+        }
+        return (
+          <div data-testid="dialog-root" {...props}>
+            <DialogContext.Provider value={{ onClose: () => handleOpenChange(false), isOpen: effectiveOpen }}>
+              {React.Children.map(children, (child) => {
+                if (!React.isValidElement(child)) return child
+                const childType =
+                  typeof child.type !== "string" && "displayName" in child.type ? child.type.displayName : undefined
+                if (childType === "DialogTrigger") {
+                  return React.cloneElement(child as React.ReactElement<DialogTriggerProps>, {
+                    isOpen: effectiveOpen,
+                    onOpen: () => handleOpenChange(true),
+                  })
+                }
+                if (childType === "DialogCloseTrigger") {
+                  const closeTriggerChild = child as RefElement
+                  return <MockDialogCloseTrigger ref={closeTriggerChild.ref} asChild {...closeTriggerChild.props} />
+                }
+                if (childType === "DialogContent" && !effectiveOpen) return null
+                return child
+              })}
+            </DialogContext.Provider>
+          </div>
+        )
+      },
+      Trigger: ({ children, isOpen, onOpen, ...props }: DialogTriggerProps) => (
+        <button data-testid="dialog-trigger" onClick={() => !isOpen && onOpen?.()} {...props}>
+          {children}
+        </button>
+      ),
+      Positioner: ({ children }: { children: ReactNode }) => <div data-testid="dialog-positioner">{children}</div>,
+      Backdrop: (props: ComponentPropsWithoutRef<"div">) => <div data-testid="dialog-backdrop" {...props} />,
+      Content: React.forwardRef<HTMLDivElement, DialogContentProps>(({ portalled, backdrop, ...props }, ref) => (
+        <div data-testid="dialog-content" ref={ref} {...props} />
+      )),
+      CloseTrigger: MockDialogCloseTrigger,
+      Footer: (props: ComponentPropsWithoutRef<"div">) => <div data-testid="dialog-footer" {...props} />,
+      Header: (props: ComponentPropsWithoutRef<"div">) => <div data-testid="dialog-header" {...props} />,
+      Body: (props: ComponentPropsWithoutRef<"div">) => <div data-testid="dialog-body" {...props} />,
+      Title: (props: ComponentPropsWithoutRef<"h2">) => <h2 data-testid="dialog-title" {...props} />,
+      Description: (props: ComponentPropsWithoutRef<"p">) => <p data-testid="dialog-description" {...props} />,
+      ActionTrigger: (props: ComponentPropsWithoutRef<"button">) => (
+        <button data-testid="dialog-action-trigger" {...props} />
+      ),
+    },
+  }
+})
 // endregion
 
 // region Type Aliases
@@ -188,7 +335,9 @@ describe("Dialog", (): void => {
     render(
       <Wrapper>
         <DialogRoot open>
-          <DialogCloseTrigger data-testid="close-trigger">Close</DialogCloseTrigger>
+          <DialogContent>
+            <DialogCloseTrigger data-testid="close-trigger">Close</DialogCloseTrigger>
+          </DialogContent>
         </DialogRoot>
       </Wrapper>,
     )
@@ -358,4 +507,5 @@ describe("Dialog", (): void => {
     expect(actionTrigger).toHaveTextContent("Action")
   })
 })
+
 // endregion

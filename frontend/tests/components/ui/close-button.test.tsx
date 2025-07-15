@@ -9,9 +9,40 @@
 // region Imports
 import { CloseButton } from "@/components/ui/close-button"
 import { render, screen } from "@testing-library/react"
-import { type RefObject, createRef } from "react"
-import { describe, expect, it } from "vitest"
+import React, { type RefObject, createRef } from "react"
+import { describe, expect, it, vi } from "vitest"
+// endregion
 
+// region Mocks
+/**
+ * Mocks the required components from `@chakra-ui/react` for CloseButton tests.
+ * The internal dependency `IconButton` is mocked to prevent it from calling
+ * context-dependent hooks. `defineRecipe` is also mocked as it's part of
+ * Chakra's styling system used by real components.
+ *
+ * NOTE: The mock factory is hoisted by Vitest. All dependencies (like React)
+ * must be imported *inside* the factory to avoid hoisting-related errors.
+ */
+vi.mock("@chakra-ui/react", async () => {
+  const React = await import("react")
+  const actual = await vi.importActual<typeof import("@chakra-ui/react")>("@chakra-ui/react")
+
+  const ThemeContext = React.createContext({ theme: { _config: {} } })
+
+  return {
+    ...actual,
+    ChakraProvider: ({ children }: { children: React.ReactNode }): React.ReactElement => (
+      <ThemeContext.Provider value={{ theme: { _config: {} } }}>{children}</ThemeContext.Provider>
+    ),
+    IconButton: React.forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<"button">>(
+      (
+        { "aria-label": ariaLabel, ...props }: React.ComponentPropsWithoutRef<"button">,
+        ref: React.ForwardedRef<HTMLButtonElement>,
+      ): React.ReactElement => <button ref={ref} aria-label={ariaLabel} {...props} />,
+    ),
+    defineRecipe: vi.fn(() => ({})),
+  }
+})
 // endregion
 
 // region Tests
@@ -85,4 +116,5 @@ describe("CloseButton", (): void => {
     expect(button).toHaveAttribute("data-test", "custom-prop")
   })
 })
+
 // endregion
