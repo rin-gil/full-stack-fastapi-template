@@ -94,4 +94,5 @@ describe("Checkbox", (): void => {
     expect(root).toHaveAttribute("aria-label", "Custom Checkbox")
   })
 })
+
 // endregion
